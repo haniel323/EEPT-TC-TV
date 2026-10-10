@@ -151,7 +151,7 @@ textarea { min-height: 76px; resize: vertical; }
 @media (max-width: 860px) { .livegrid.withchat { grid-template-columns: 1fr; } }
 #livechat iframe { width: 100%; height: 100%; min-height: 480px; border: 0; border-radius: 14px; background: var(--paper); }
 dialog { max-height: 94vh; overflow: auto; }
-.cmt-box { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 18px 0; text-align: left; }
+.cmt-box { background: #ffffff; color: #111111; border: 1px solid #e3ddd1; border-radius: 14px; padding: 16px; margin: 18px 0; text-align: left; }
 .cmt-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
 .cmt-head h3 { font-family: var(--sans); font-size: 1.1rem; margin: 0; }
 .cmt-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
@@ -172,7 +172,22 @@ dialog { max-height: 94vh; overflow: auto; }
 .cmt-replies { margin: 6px 0 0 0; }
 .cmt-msg { color: var(--muted); font-size: .92rem; margin: 6px 0; }
 .cmt-msg.err { color: var(--red); }
-@media (prefers-color-scheme: dark) { .cmt-tools a, .cmt-act button, .cmt-more { color: var(--gold); } }
+
+.cmt-box h3, .cmt-box b, .cmt-box .cmt-text, .cmt-box .cmt-form label { color: #111111; }
+.cmt-box .meta, .cmt-box .cmt-msg, .cmt-box .cmt-act { color: #555555; }
+.cmt-box .cmt-msg.err { color: #c62828; }
+.cmt-box .cmt { border-top-color: #e3ddd1; }
+.cmt-box .cmt-tools a, .cmt-box .cmt-act button, .cmt-box .cmt-more { color: #034576; }
+.cmt-box textarea, .cmt-box select { background: #f7f4ee; color: #111111; border-color: #cfc8b8; }
+.cmt-box textarea::placeholder { color: #6b6b6b; }
+.cmt-box img, .cmt-box .av { background: #e6eef5; }
+.chips { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 8px; }
+.chip { border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); padding: 8px 18px; border-radius: 999px; font-weight: 600; }
+.chip:hover { border-color: var(--gold); }
+.part { padding-top: 22px; }
+.part h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.part .count { font-family: var(--sans); font-size: .8rem; font-weight: 600; background: var(--blue-soft); color: var(--blue); border-radius: 999px; padding: 2px 10px; }
+@media (prefers-color-scheme: dark) { .part .count { color: var(--gold); } }
 </style>
 </head>
 <body>
@@ -212,9 +227,9 @@ dialog { max-height: 94vh; overflow: auto; }
     try { c = await (await realFetch('contenu.json', { cache: 'no-store' })).json(); } catch (e) { console.warn('contenu.json introuvable', e); }
     const when = (x) => Date.parse(x.date) || 0;
     const list = (a) => (Array.isArray(a) ? a : []);
-    const videos = list(c.videos).map((v, i) => ({ id: 'v' + i, type: 'videos', title: v.titre || 'Vidéo', description: v.description || '', createdAt: when(v), source: v.direct ? 'direct' : '', youtube: v.youtube || '', url: v.url || '', thumb: v.miniature || (v.youtube ? yt(v.youtube) : null) }));
+    const videos = list(c.videos).map((v, i) => ({ id: 'v' + i, type: 'videos', title: v.titre || 'Vidéo', description: v.description || '', createdAt: when(v), source: v.direct ? 'direct' : '', category: v.categorie || '', youtube: v.youtube || '', url: v.url || '', thumb: v.miniature || (v.youtube ? yt(v.youtube) : null) }));
     const photos = list(c.photos).map((p, i) => ({ id: 'p' + i, type: 'photos', title: p.titre || 'Photo', description: p.description || '', createdAt: when(p), url: p.url, thumb: p.miniature || p.url }));
-    const audios = list(c.audios).map((a, i) => ({ id: 'a' + i, type: 'audios', title: a.titre || 'Audio', description: a.description || '', createdAt: when(a), url: a.url }));
+    const audios = list(c.audios).map((a, i) => ({ id: 'a' + i, type: 'audios', title: a.titre || 'Audio', description: a.description || '', createdAt: when(a), category: a.categorie || '', url: a.url }));
     window.GCFG = c.google || {};
     const d = c.direct || {};
     return { items: [...videos, ...photos, ...audios].sort((a, b) => b.createdAt - a.createdAt),
@@ -323,12 +338,22 @@ async function mediaPage(type) {
   const items = await getJson('/api/media?type=' + type).catch(() => []);
   const T = { videos: ['Vidéos', 'Prédications, enseignements et rediffusions de nos cultes.'], photos: ['Photos', 'Les moments forts de la vie de l’église.'], audios: ['Audios', 'Écoutez les messages et les temps de louange où que vous soyez.'] }[type];
   document.title = `${T[0]} — EEPT Tokoin Centre`;
-  const body = !items.length ? `<div class="empty">Rien à afficher pour le moment.</div>`
-    : type === 'videos' ? `<div class="grid">${items.map(videoCard).join('')}</div>`
+  const body = type === 'videos' || type === 'audios' ? grouped(items, type)
+    : !items.length ? `<div class="empty">Rien à afficher pour le moment.</div>`
     : type === 'photos' ? `<div class="grid photos">${items.map((p, i) => `<button class="photo" data-photo="${i}" aria-label="${esc(p.title)}"><img loading="lazy" src="${p.thumb || p.url}" alt="${esc(p.title)}"><span>${esc(p.title)}</span></button>`).join('')}</div>`
-    : `<div class="audio-list">${items.map(audioCard).join('')}</div>`;
+    : '';
   view.innerHTML = `<div class="wrap"><div class="page-title"><h1>${T[0]}</h1><p>${T[1]}</p></div><section class="block" style="padding-top:20px">${body}</section></div>`;
+  view.querySelectorAll('[data-goto]').forEach((b) => b.addEventListener('click', () => { const t = document.getElementById(b.dataset.goto); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
   bindMedia(type === 'videos' ? items : [], type === 'photos' ? items : []);
+}
+function grouped(items, type) {
+  const defs = type === 'videos' ? [['dimanche', 'Cultes du dimanche'], ['priere', 'Temps de prière']] : [['dimanche', 'Prédications du dimanche'], ['priere', 'Temps de prière']];
+  const render = (a) => (type === 'videos' ? `<div class="grid">${a.map(videoCard).join('')}</div>` : `<div class="audio-list">${a.map(audioCard).join('')}</div>`);
+  const other = items.filter((i) => i.category !== 'dimanche' && i.category !== 'priere');
+  const sec = (id, title, arr, always) => (arr.length || always
+    ? `<section class="part" id="part-${id}"><h2>${title} <span class="count">${arr.length}</span></h2>${arr.length ? render(arr) : '<div class="empty">Rien pour le moment.</div>'}</section>` : '');
+  const chips = `<div class="chips">${defs.map(([k, t]) => `<button class="chip" type="button" data-goto="part-${k}">${t}</button>`).join('')}</div>`;
+  return chips + defs.map(([k, t]) => sec(k, t, items.filter((i) => i.category === k), true)).join('') + sec('autres', type === 'videos' ? 'Autres vidéos' : 'Autres audios', other, false);
 }
 
 /* ───────── Composants ───────── */
@@ -342,7 +367,7 @@ function audioCard(a) {
 function bindMedia(videos, photos) {
   view.querySelectorAll('[data-video]').forEach((b) => b.addEventListener('click', () => {
     const v = videos.find((x) => x.id === b.dataset.video); if (!v) return;
-    openDialog(`${v.youtube ? `<iframe class="big" style="aspect-ratio:16/9;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : `<video controls autoplay playsinline src="${v.url}"></video>`}<div class="cap"><strong>${esc(v.title)}</strong></div>${v.youtube ? '<div id="dlg-cmt"></div>' : ''}`);
+    openDialog(`${v.youtube ? `<iframe class="big" style="aspect-ratio:16/9;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : `<video controls autoplay playsinline src="${v.url}"></video>`}<div class="cap"><strong>${esc(v.title)}</strong>${v.description ? `<div style="color:#dbe5ee;margin-top:4px;white-space:pre-line">${esc(v.description)}</div>` : ''}</div>${v.youtube ? '<div id="dlg-cmt"></div>' : ''}`);
     if (v.youtube) mountComments($('#dlg-cmt'), v.youtube);
   }));
   view.querySelectorAll('[data-photo]').forEach((b) => b.addEventListener('click', () => {

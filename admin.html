@@ -26,7 +26,7 @@ main { padding-block:24px 56px; }
 h1,h2 { font-family:var(--serif); line-height:1.2; margin:0 0 10px; }
 h2 { font-size:1.3rem; }
 label { display:block; font-weight:600; font-size:.9rem; margin:12px 0 4px; }
-input[type=text],input[type=password],input[type=date],input[type=url],textarea { width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; background:var(--cream); color:var(--ink); font:inherit; }
+input[type=text],input[type=password],input[type=date],input[type=url],textarea,select { width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; background:var(--cream); color:var(--ink); font:inherit; }
 textarea { min-height:70px; resize:vertical; }
 .btn { display:inline-flex; align-items:center; gap:8px; border:0; border-radius:999px; padding:10px 20px; font-weight:600; background:var(--gold); color:#1b1405; }
 .btn:disabled { opacity:.55; cursor:wait; }
@@ -50,6 +50,8 @@ textarea { min-height:70px; resize:vertical; }
 .steps li { margin:6px 0; }
 .progress { height:8px; border-radius:99px; background:var(--line); overflow:hidden; margin-top:6px; }
 .progress i { display:block; height:100%; width:0; background:var(--gold); }
+.editor { background:var(--blue-soft); border-radius:10px; padding:4px 14px 14px; margin:6px 0 10px; }
+.editor input,.editor textarea,.editor select { background:var(--paper); }
 :focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
 </style>
 </head>
@@ -238,17 +240,32 @@ function directView() {
 }
 
 /* Liste commune */
+const CATLABEL = { dimanche: 'Dimanche', priere: 'Prière' };
+const catSelect = (id, val, field) => `<select id="${id}"${field ? ' data-f="categorie"' : ''}><option value="dimanche"${val === 'dimanche' ? ' selected' : ''}>Dimanche (culte, prédication)</option><option value="priere"${val === 'priere' ? ' selected' : ''}>Prière</option><option value=""${!val ? ' selected' : ''}>Non classé</option></select>`;
 function listHtml(kind) {
   const arr = data[kind].map((x, i) => ({ x, i })).sort((a, b) => String(b.x.date).localeCompare(String(a.x.date)));
   if (!arr.length) return '<p class="meta">Rien pour le moment.</p>';
-  return arr.map(({ x, i }) => `<div class="item"><div class="t"><b>${esc(x.titre)}</b><span class="meta">${esc(x.date || '')}${x.direct ? ' · rediffusion du direct' : ''}</span></div>
-    <button class="btn small ghost" data-ren="${i}">Renommer</button><button class="btn small danger" data-del="${i}">Supprimer</button></div>`).join('');
+  return arr.map(({ x, i }) => `<div class="item"><div class="t"><b>${esc(x.titre)}</b><span class="meta">${esc(x.date || '')}${x.categorie ? ' · ' + (CATLABEL[x.categorie] || '') : ''}${x.direct ? ' · rediffusion du direct' : ''}</span>${x.description ? `<span class="meta" style="display:block">${esc(x.description)}</span>` : ''}</div>
+    <button class="btn small ghost" data-edit="${i}">Modifier</button><button class="btn small danger" data-del="${i}">Supprimer</button></div>
+    <div class="editor" data-ed="${i}" hidden>
+      <label>Titre</label><input type="text" data-f="titre" value="${esc(x.titre)}" maxlength="150">
+      <div class="grid2"><div><label>Date</label><input type="date" data-f="date" value="${esc(x.date || '')}"></div>
+      ${kind !== 'photos' ? `<div><label>Catégorie</label>${catSelect('', x.categorie || '', true)}</div>` : ''}</div>
+      <label>Légende</label><textarea data-f="description" maxlength="1000">${esc(x.description || '')}</textarea>
+      <p style="margin-top:10px"><button class="btn small" data-save="${i}">Enregistrer les modifications</button></p></div>`).join('');
 }
-function bindList(kind, label) {
-  document.querySelectorAll('[data-ren]').forEach((b) => (b.onclick = async () => {
-    const it = data[kind][+b.dataset.ren]; const t = prompt('Nouveau titre :', it.titre);
-    if (!t || !t.trim()) return; it.titre = t.trim();
-    try { await saveData('Renommer : ' + it.titre); } catch (e) { alert(e.message); }
+function bindList(kind) {
+  document.querySelectorAll('[data-edit]').forEach((b) => (b.onclick = () => { const ed = document.querySelector(`[data-ed="${b.dataset.edit}"]`); ed.hidden = !ed.hidden; }));
+  document.querySelectorAll('[data-save]').forEach((b) => (b.onclick = async () => {
+    const it = data[kind][+b.dataset.save], ed = document.querySelector(`[data-ed="${b.dataset.save}"]`);
+    const f = (k) => { const e = ed.querySelector(`[data-f="${k}"]`); return e ? e.value.trim() : null; };
+    if (f('titre')) it.titre = f('titre');
+    if (f('date')) it.date = f('date');
+    it.description = f('description') || '';
+    if (!it.description) delete it.description;
+    const c = f('categorie'); if (c !== null) { if (c) it.categorie = c; else delete it.categorie; }
+    b.disabled = true;
+    try { await saveData('Modifier : ' + it.titre); } catch (e) { alert(e.message); }
     start();
   }));
   document.querySelectorAll('[data-del]').forEach((b) => (b.onclick = async () => {
@@ -262,6 +279,7 @@ function bindList(kind, label) {
     start();
   }));
 }
+const clean = (o) => { for (const k of Object.keys(o)) if (o[k] === '' || o[k] === undefined) delete o[k]; return o; };
 
 /* Vidéos */
 function videosView() {
@@ -270,7 +288,8 @@ function videosView() {
     <label for="vt">Titre</label><input id="vt" type="text" maxlength="150">
     <div class="grid2"><div><label for="vy">Lien YouTube</label><input id="vy" type="text" placeholder="https://youtu.be/…"></div>
     <div><label for="vd">Date</label><input id="vd" type="date" value="${today()}"></div></div>
-    <label for="vx">Description (facultative)</label><textarea id="vx" maxlength="1000"></textarea>
+    <label for="vc">Partie du site</label>${catSelect('vc', 'dimanche')}
+    <label for="vx">Légende (facultative, affichée sous la vidéo)</label><textarea id="vx" maxlength="1000" placeholder="Ex : Message du pasteur sur la foi. Texte : Hébreux 11."></textarea>
     <label class="sw" style="margin-top:12px"><input type="checkbox" id="vr"> C'est la rediffusion d'un direct</label>
     <p style="margin-top:14px"><button class="btn" id="add">Ajouter</button> <span id="st"></span></p></div>
     <div class="panel"><h2>Vidéos publiées</h2>${listHtml('videos')}</div>`;
@@ -278,7 +297,7 @@ function videosView() {
     const titre = $('#vt').value.trim(), id = ytId($('#vy').value);
     if (!titre) return status($('#st'), 'Donnez un titre.', false);
     if (!id) return status($('#st'), 'Lien YouTube non reconnu.', false);
-    data.videos.push({ titre, date: $('#vd').value || today(), youtube: id, description: $('#vx').value.trim(), ...($('#vr').checked ? { direct: true } : {}) });
+    data.videos.push(clean({ titre, date: $('#vd').value || today(), youtube: id, categorie: $('#vc').value, description: $('#vx').value.trim(), direct: $('#vr').checked || undefined }));
     $('#add').disabled = true; status($('#st'), 'Enregistrement…');
     try { await saveData('Ajouter la vidéo : ' + titre); start(); } catch (e) { data.videos.pop(); status($('#st'), e.message, false); $('#add').disabled = false; }
   };
@@ -292,6 +311,7 @@ function photosView() {
     <label for="pf">Photos</label><input id="pf" type="file" accept="image/*" multiple>
     <div class="grid2"><div><label for="pt">Titre (facultatif)</label><input id="pt" type="text" maxlength="150" placeholder="Ex : Baptême du 5 octobre"></div>
     <div><label for="pd">Date</label><input id="pd" type="date" value="${today()}"></div></div>
+    <label for="px">Légende (facultative)</label><input id="px" type="text" maxlength="500">
     <div class="progress"><i id="bar"></i></div>
     <p style="margin-top:14px"><button class="btn" id="add">Envoyer</button> <span id="st"></span></p></div>
     <div class="panel"><h2>Photos publiées</h2>${listHtml('photos')}</div>`;
@@ -303,7 +323,7 @@ function photosView() {
         status($('#st'), `Envoi ${n + 1} / ${files.length}…`);
         const blob = await resizeImage(f); const path = `photos/${Date.now()}-${slug(f.name)}.jpg`;
         await putFile(path, await fileB64(blob), 'Ajouter la photo ' + f.name);
-        data.photos.push({ titre: $('#pt').value.trim() || f.name.replace(/\.[^.]+$/, ''), date: $('#pd').value || today(), url: path });
+        data.photos.push(clean({ titre: $('#pt').value.trim() || f.name.replace(/\.[^.]+$/, ''), date: $('#pd').value || today(), url: path, description: $('#px').value.trim() }));
         $('#bar').style.width = Math.round((++n / files.length) * 100) + '%';
       }
       await saveData(`Ajouter ${n} photo(s)`); start();
@@ -323,6 +343,8 @@ function audiosView() {
     <label for="au">… ou lien direct vers le fichier</label><input id="au" type="url" placeholder="https://…/message.mp3">
     <div class="grid2"><div><label for="at">Titre</label><input id="at" type="text" maxlength="150"></div>
     <div><label for="ad">Date</label><input id="ad" type="date" value="${today()}"></div></div>
+    <label for="ac">Partie du site</label>${catSelect('ac', 'dimanche')}
+    <label for="ax">Légende (facultative, affichée sous le titre)</label><textarea id="ax" maxlength="1000" placeholder="Ex : Prédication du dimanche, texte : Jean 3."></textarea>
     <p style="margin-top:14px"><button class="btn" id="add">Ajouter</button> <span id="st"></span></p></div>
     <div class="panel"><h2>Audios publiés</h2>${listHtml('audios')}</div>`;
   $('#add').onclick = async () => {
@@ -335,7 +357,7 @@ function audiosView() {
     try {
       let url = link;
       if (f) { const ext = (f.name.match(/\.[^.]+$/) || ['.mp3'])[0].toLowerCase(); url = `audios/${Date.now()}-${slug(f.name)}${ext}`; await putFile(url, await fileB64(f), 'Ajouter l’audio ' + f.name); }
-      data.audios.push({ titre, date: $('#ad').value || today(), url });
+      data.audios.push(clean({ titre, date: $('#ad').value || today(), url, categorie: $('#ac').value, description: $('#ax').value.trim() }));
       await saveData('Ajouter l’audio : ' + titre); start();
     } catch (e) { status($('#st'), e.message, false); $('#add').disabled = false; }
   };
