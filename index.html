@@ -145,6 +145,34 @@ textarea { min-height: 76px; resize: vertical; }
 .warn { background: #fff4d6; color: #5a4000; border-radius: 10px; padding: 10px 14px; font-size: .92rem; }
 .login { max-width: 400px; margin: 64px auto; }
 
+
+.livegrid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+.livegrid.withchat { grid-template-columns: minmax(0, 1fr) 340px; }
+@media (max-width: 860px) { .livegrid.withchat { grid-template-columns: 1fr; } }
+#livechat iframe { width: 100%; height: 100%; min-height: 480px; border: 0; border-radius: 14px; background: var(--paper); }
+dialog { max-height: 94vh; overflow: auto; }
+.cmt-box { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 18px 0; text-align: left; }
+.cmt-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.cmt-head h3 { font-family: var(--sans); font-size: 1.1rem; margin: 0; }
+.cmt-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
+.cmt-tools select { padding: 5px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--cream); color: var(--ink); font: inherit; }
+.cmt-tools a { color: var(--blue); font-weight: 600; }
+.cmt-form textarea, .cmt-reply textarea { width: 100%; min-height: 64px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--cream); color: var(--ink); font: inherit; resize: vertical; }
+.cmt-form .row, .cmt-reply .row { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.cmt { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.cmt.sub { padding: 10px 0 0; border: 0; }
+.cmt img, .cmt .av { width: 36px; height: 36px; border-radius: 50%; flex: none; background: var(--blue-soft); object-fit: cover; }
+.cmt.sub img, .cmt.sub .av { width: 28px; height: 28px; }
+.cmt-body { min-width: 0; flex: 1; }
+.cmt-body b { font-size: .92rem; }
+.cmt-body .meta { margin-left: 6px; }
+.cmt-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 2px 0 4px; }
+.cmt-act { display: flex; gap: 14px; font-size: .85rem; color: var(--muted); align-items: center; }
+.cmt-act button, .cmt-more { background: none; border: 0; color: var(--blue); font-weight: 600; padding: 0; cursor: pointer; font-size: .88rem; }
+.cmt-replies { margin: 6px 0 0 0; }
+.cmt-msg { color: var(--muted); font-size: .92rem; margin: 6px 0; }
+.cmt-msg.err { color: var(--red); }
+@media (prefers-color-scheme: dark) { .cmt-tools a, .cmt-act button, .cmt-more { color: var(--gold); } }
 </style>
 </head>
 <body>
@@ -187,6 +215,7 @@ textarea { min-height: 76px; resize: vertical; }
     const videos = list(c.videos).map((v, i) => ({ id: 'v' + i, type: 'videos', title: v.titre || 'Vidéo', description: v.description || '', createdAt: when(v), source: v.direct ? 'direct' : '', youtube: v.youtube || '', url: v.url || '', thumb: v.miniature || (v.youtube ? yt(v.youtube) : null) }));
     const photos = list(c.photos).map((p, i) => ({ id: 'p' + i, type: 'photos', title: p.titre || 'Photo', description: p.description || '', createdAt: when(p), url: p.url, thumb: p.miniature || p.url }));
     const audios = list(c.audios).map((a, i) => ({ id: 'a' + i, type: 'audios', title: a.titre || 'Audio', description: a.description || '', createdAt: when(a), url: a.url }));
+    window.GCFG = c.google || {};
     const d = c.direct || {};
     return { items: [...videos, ...photos, ...audios].sort((a, b) => b.createdAt - a.createdAt),
       live: { live: !!d.actif, title: d.titre || 'Culte en direct', description: d.description || '', playlist: d.hls || '', youtube: d.youtube || '' } };
@@ -272,18 +301,20 @@ async function direct() {
   view.innerHTML = `
     <div class="wrap">
       <div class="page-title"><h1>Direct</h1></div>
-      <div class="player" id="player"></div>
+      <div class="livegrid" id="livegrid"><div class="player" id="player"></div><div id="livechat"></div></div>
       <div class="live-info"><span class="pill ${live.live ? '' : 'off'}">${live.live ? '● EN DIRECT' : 'HORS LIGNE'}</span><h2 style="font-size:1.4rem">${esc(live.title || 'Culte en direct')}</h2></div>
       ${live.description ? `<p class="meta" style="font-size:1rem;white-space:pre-line">${esc(live.description)}</p>` : ''}
       ${replays.length ? `<section class="block"><div class="sec-head"><h2>Rediffusions récentes</h2><a href="#/videos">Toutes les vidéos</a></div><div class="grid">${replays.map(videoCard).join('')}</div></section>` : ''}
     </div>`;
   bindMedia(replays, []);
   const box = $('#player');
+  if (live.youtube) { const c = document.createElement('div'); c.id = 'livecmt'; const blk = view.querySelector('.block'); if (blk) blk.before(c); else view.querySelector('.wrap').append(c); mountComments(c, live.youtube); }
   if (!live.live) {
     box.innerHTML = `<div class="offline"><h2>Aucun direct en ce moment</h2><p>${esc(live.description) || 'Revenez à l’heure du culte ou de la séance de prière : le direct démarre ici automatiquement.'}</p></div>`;
     return;
   }
-  if (live.youtube) { box.innerHTML = `<iframe style="width:100%;height:100%;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(live.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`; return; }
+  if (live.youtube) { box.innerHTML = `<iframe style="width:100%;height:100%;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(live.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    $('#livechat').innerHTML = `<iframe title="Chat du direct" src="https://www.youtube.com/live_chat?v=${encodeURIComponent(live.youtube)}&embed_domain=${encodeURIComponent(location.hostname)}"></iframe>`; $('#livegrid').classList.add('withchat'); return; }
   box.innerHTML = '<video id="vid" controls autoplay muted playsinline></video>';
   startPlayer($('#vid'), live.playlist);
 }
@@ -311,7 +342,8 @@ function audioCard(a) {
 function bindMedia(videos, photos) {
   view.querySelectorAll('[data-video]').forEach((b) => b.addEventListener('click', () => {
     const v = videos.find((x) => x.id === b.dataset.video); if (!v) return;
-    openDialog(`${v.youtube ? `<iframe class="big" style="aspect-ratio:16/9;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : `<video controls autoplay playsinline src="${v.url}"></video>`}<div class="cap"><strong>${esc(v.title)}</strong></div>`);
+    openDialog(`${v.youtube ? `<iframe class="big" style="aspect-ratio:16/9;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : `<video controls autoplay playsinline src="${v.url}"></video>`}<div class="cap"><strong>${esc(v.title)}</strong></div>${v.youtube ? '<div id="dlg-cmt"></div>' : ''}`);
+    if (v.youtube) mountComments($('#dlg-cmt'), v.youtube);
   }));
   view.querySelectorAll('[data-photo]').forEach((b) => b.addEventListener('click', () => {
     const p = photos[+b.dataset.photo];
@@ -344,6 +376,114 @@ async function startPlayer(video, src) {
   });
 }
 function stopPlayer() { if (hls) { hls.destroy(); hls = null; } }
+
+/* ───── Commentaires YouTube : lecture (clé API) et écriture (connexion Google) ───── */
+const YTAPI = 'https://www.googleapis.com/youtube/v3';
+const G = { token: '', exp: 0 };
+const gcfg = () => window.GCFG || {};
+let gisPromise = null;
+const signedIn = () => !!G.token && Date.now() < G.exp;
+function loadGis() {
+  return gisPromise || (gisPromise = new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = () => { gisPromise = null; rej(new Error('Connexion Google indisponible')); }; document.head.appendChild(s); }));
+}
+async function gSignIn() {
+  await loadGis();
+  return new Promise((res, rej) => {
+    const tc = window.google.accounts.oauth2.initTokenClient({
+      client_id: gcfg().clientId, scope: 'https://www.googleapis.com/auth/youtube.force-ssl',
+      callback: (r) => { if (r.error) return rej(new Error(r.error)); G.token = r.access_token; G.exp = Date.now() + ((+r.expires_in || 3600) - 60) * 1000; res(); },
+      error_callback: (e) => rej(new Error((e && e.type) || 'annulé')),
+    });
+    tc.requestAccessToken();
+  });
+}
+async function ytCall(method, path, body) {
+  const url = method === 'GET' ? `${YTAPI}/${path}&key=${encodeURIComponent(gcfg().apiKey || '')}` : `${YTAPI}/${path}`;
+  const r = await fetch(url, method === 'GET' ? {} : { method, headers: { Authorization: 'Bearer ' + G.token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error((j.error && j.error.message) || String(r.status)); e.status = r.status; e.reason = (j.error && j.error.errors && j.error.errors[0] && j.error.errors[0].reason) || ''; throw e; }
+  return j;
+}
+function ytError(e, writing) {
+  if (e.reason === 'commentsDisabled') return 'Les commentaires sont désactivés pour cette vidéo.';
+  if (e.reason === 'videoNotFound') return 'Vidéo introuvable.';
+  if (e.reason === 'quotaExceeded' || e.reason === 'rateLimitExceeded') return 'Limite YouTube atteinte pour aujourd’hui. Réessayez plus tard.';
+  if (writing && e.status === 401) { G.token = ''; return 'Connexion expirée. Reconnectez-vous avec Google.'; }
+  if (e.reason === 'forbidden' && writing) return 'Autorisation refusée par YouTube pour ce compte.';
+  if (e.status === 400 || e.status === 403) return 'Accès YouTube refusé. Vérifiez la clé API et sa restriction de site.';
+  return 'Erreur YouTube (' + (e.message || e.status) + ').';
+}
+const mapC = (c) => ({ id: c.id, author: c.snippet.authorDisplayName, avatar: c.snippet.authorProfileImageUrl, text: c.snippet.textOriginal || c.snippet.textDisplay || '', likes: c.snippet.likeCount || 0, date: Date.parse(c.snippet.publishedAt) || 0 });
+const mapT = (t) => ({ id: t.id, top: mapC(t.snippet.topLevelComment), total: t.snippet.totalReplyCount || 0, replies: ((t.replies && t.replies.comments) || []).map(mapC) });
+
+function mountComments(el, videoId) {
+  if (!el || !videoId) return;
+  const id = encodeURIComponent(videoId);
+  const ytLink = `https://www.youtube.com/watch?v=${id}`;
+  const st = { threads: [], next: '', order: 'relevance', loaded: false };
+  el.classList.add('cmt-box');
+  el.innerHTML = `<div class="cmt-head"><h3>Commentaires</h3><div class="cmt-tools"><select data-k="order" aria-label="Trier les commentaires"><option value="relevance">Les plus pertinents</option><option value="time">Les plus récents</option></select><a href="${ytLink}" target="_blank" rel="noopener">Ouvrir sur YouTube</a></div></div><div data-k="form"></div><div data-k="msg" class="cmt-msg"></div><div data-k="list"></div><div data-k="more"></div>`;
+  const q = (k) => el.querySelector(`[data-k="${k}"]`);
+  const msg = (t, err) => { q('msg').textContent = t || ''; q('msg').classList.toggle('err', !!err); };
+
+  function formHtml() {
+    if (!gcfg().clientId) return `<p class="cmt-msg">Pour écrire un commentaire, ouvrez la vidéo <a href="${ytLink}" target="_blank" rel="noopener">sur YouTube</a>.</p>`;
+    if (!signedIn()) return `<button class="btn small" data-act="login" type="button">Se connecter avec Google pour commenter</button>`;
+    return `<textarea data-k="new" maxlength="9000" placeholder="Ajouter un commentaire…" aria-label="Votre commentaire"></textarea><div class="row"><button class="btn small" data-act="post" type="button">Publier</button><span class="cmt-msg" data-k="fmsg"></span></div>`;
+  }
+  const renderForm = () => { q('form').innerHTML = formHtml(); };
+  const one = (c, sub) => `<div class="cmt${sub ? ' sub' : ''}">${c.avatar ? `<img src="${esc(c.avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<div class="av"></div>'}<div class="cmt-body"><div><b>${esc(c.author)}</b><span class="meta">${c.date ? fmtDate(c.date) : ''}</span></div><div class="cmt-text">${esc(c.text)}</div><div class="cmt-act">${c.likes ? `<span>👍 ${c.likes}</span>` : ''}</div></div></div>`;
+  function renderList() {
+    q('list').innerHTML = st.threads.map((t) => `<div class="cmt" data-t="${esc(t.id)}">${t.top.avatar ? `<img src="${esc(t.top.avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<div class="av"></div>'}<div class="cmt-body"><div><b>${esc(t.top.author)}</b><span class="meta">${t.top.date ? fmtDate(t.top.date) : ''}</span></div><div class="cmt-text">${esc(t.top.text)}</div>
+      <div class="cmt-act">${t.top.likes ? `<span>👍 ${t.top.likes}</span>` : ''}${gcfg().clientId ? `<button type="button" data-act="reply">Répondre</button>` : ''}${t.total > t.replies.length ? `<button type="button" data-act="more-replies">Voir les ${t.total} réponses</button>` : ''}</div>
+      <div class="cmt-reply" data-k="rbox"></div><div class="cmt-replies">${t.replies.map((r) => one(r, true)).join('')}</div></div></div>`).join('');
+    q('more').innerHTML = st.next ? `<button class="cmt-more" type="button" data-act="more">Afficher plus de commentaires</button>` : '';
+  }
+  async function load(reset) {
+    if (reset) { st.threads = []; st.next = ''; }
+    if (!gcfg().apiKey) { msg('La lecture des commentaires n’est pas encore activée sur ce site. Vous pouvez les voir sur YouTube.'); return; }
+    msg('Chargement des commentaires…');
+    try {
+      const j = await ytCall('GET', `commentThreads?part=snippet,replies&videoId=${id}&maxResults=20&order=${st.order}&textFormat=plainText${st.next ? '&pageToken=' + encodeURIComponent(st.next) : ''}`);
+      st.threads.push(...(j.items || []).map(mapT)); st.next = j.nextPageToken || ''; st.loaded = true;
+      msg(st.threads.length ? '' : 'Aucun commentaire pour le moment.'); renderList();
+    } catch (e) { msg(ytError(e, false), true); }
+  }
+  async function ensureLogin() { if (!signedIn()) { await gSignIn(); } }
+
+  el.addEventListener('change', (e) => { if (e.target.dataset.k === 'order') { st.order = e.target.value; load(true); } });
+  el.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act, row = b.closest('[data-t]');
+    try {
+      if (act === 'login') { b.disabled = true; try { await gSignIn(); } finally { b.disabled = false; } renderForm(); }
+      else if (act === 'more') await load(false);
+      else if (act === 'post') {
+        const ta = q('new'), text = ta.value.trim(), fm = q('fmsg'); if (!text) return;
+        b.disabled = true; fm.textContent = 'Publication…';
+        try { await ensureLogin(); const j = await ytCall('POST', 'commentThreads?part=snippet', { snippet: { videoId, topLevelComment: { snippet: { textOriginal: text } } } }); st.threads.unshift(mapT(j)); ta.value = ''; fm.textContent = 'Commentaire publié ✓'; renderList(); }
+        catch (er) { fm.textContent = ytError(er, true); fm.classList.add('err'); if (!signedIn()) renderForm(); }
+        finally { b.disabled = false; }
+      } else if (act === 'reply' && row) {
+        const rb = row.querySelector('[data-k="rbox"]');
+        rb.innerHTML = `<textarea maxlength="9000" aria-label="Votre réponse" placeholder="Votre réponse…"></textarea><div class="row"><button class="btn small" data-act="send-reply" type="button">Répondre</button><button class="cmt-more" data-act="cancel-reply" type="button">Annuler</button><span class="cmt-msg"></span></div>`;
+        rb.querySelector('textarea').focus();
+      } else if (act === 'cancel-reply' && row) row.querySelector('[data-k="rbox"]').innerHTML = '';
+      else if (act === 'send-reply' && row) {
+        const rb = row.querySelector('[data-k="rbox"]'), text = rb.querySelector('textarea').value.trim(), m = rb.querySelector('.cmt-msg'); if (!text) return;
+        const t = st.threads.find((x) => x.id === row.dataset.t);
+        b.disabled = true; m.textContent = 'Envoi…';
+        try { await ensureLogin(); const j = await ytCall('POST', 'comments?part=snippet', { snippet: { parentId: t.top.id, textOriginal: text } }); t.replies.push(mapC(j)); t.total = Math.max(t.total + 1, t.replies.length); renderList(); renderForm(); }
+        catch (er) { m.textContent = ytError(er, true); m.classList.add('err'); b.disabled = false; }
+      } else if (act === 'more-replies' && row) {
+        const t = st.threads.find((x) => x.id === row.dataset.t); b.disabled = true;
+        try { const j = await ytCall('GET', `comments?part=snippet&parentId=${encodeURIComponent(t.top.id)}&maxResults=100&textFormat=plainText`); t.replies = (j.items || []).map(mapC); renderList(); }
+        catch (er) { msg(ytError(er, false), true); b.disabled = false; }
+      }
+    } catch (er) { msg(er.message === 'popup_closed' || er.message === 'annulé' ? '' : 'Connexion Google impossible : ' + er.message, true); }
+  });
+  renderForm(); load(true);
+}
 
 render();
 

@@ -106,6 +106,7 @@ async function loadData() {
   const j = await gh(`${repoPath()}/contents/contenu.json?t=${Date.now()}`);
   sha = j.sha;
   let d = {}; try { d = JSON.parse(unb64(j.content)); } catch {}
+  d.google = { apiKey: '', clientId: '', ...(d.google || {}) };
   d.direct = { actif: false, titre: 'Culte en direct', description: '', youtube: '', hls: '', ...(d.direct || {}) };
   for (const k of ['videos', 'photos', 'audios']) if (!Array.isArray(d[k])) d[k] = [];
   data = d;
@@ -204,7 +205,19 @@ function directView() {
     <label for="desc">Description / horaires</label><textarea id="desc" maxlength="1000" placeholder="Ex : Culte chaque dimanche à 9h.">${esc(d.description)}</textarea>
     <label for="yt">Lien ou identifiant du live YouTube</label><input id="yt" type="text" value="${esc(d.youtube)}" placeholder="https://www.youtube.com/watch?v=…">
     <p class="meta" id="ytok"></p>
-    <p style="margin-top:14px"><button class="btn" id="save">Enregistrer</button> <span id="st"></span></p></div>`;
+    <p style="margin-top:14px"><button class="btn" id="save">Enregistrer</button> <span id="st"></span></p></div>
+    <div class="panel"><h2>Commentaires YouTube</h2>
+    <p class="meta">Affiche les commentaires sous vos vidéos et le chat pendant le direct. La clé API permet de <b>lire</b> les commentaires. L'identifiant client permet aux personnes connectées avec Google d'<b>écrire</b> un commentaire ou une réponse. Sans ces deux champs, un lien vers YouTube s'affiche à la place.</p>
+    <details class="note" style="margin-top:10px"><summary><b>Comment obtenir ces deux valeurs (gratuit)</b></summary><ol class="steps">
+      <li>Ouvrez <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a>, créez un projet (ex. « Site église »).</li>
+      <li>Menu « API et services » → « Bibliothèque » → cherchez <b>YouTube Data API v3</b> → « Activer ».</li>
+      <li><b>Clé API :</b> « Identifiants » → « Créer des identifiants » → « Clé API ». Cliquez sur la clé créée : « Restrictions relatives aux applications » → « Sites Web » → ajoutez <code>${esc(location.origin)}/*</code>. Dans « Restrictions relatives aux API », choisissez YouTube Data API v3. Enregistrez.</li>
+      <li><b>Identifiant client (pour écrire) :</b> « Écran de consentement OAuth » → type « Externe », renseignez le nom du site et votre e-mail, puis ajoutez la portée <code>https://www.googleapis.com/auth/youtube.force-ssl</code>. Ensuite « Identifiants » → « Créer des identifiants » → « ID client OAuth » → « Application Web », et dans « Origines JavaScript autorisées » ajoutez <code>${esc(location.origin)}</code>.</li>
+      <li>Collez la clé API et l'ID client ci-dessous, puis enregistrez.</li></ol>
+      <p class="meta">Tant que l'application Google n'est pas validée par Google, seuls les comptes ajoutés comme « utilisateurs de test » (100 maximum) peuvent écrire, et les autres voient un avertissement. La lecture fonctionne pour tout le monde.</p></details>
+    <label for="gk">Clé API YouTube</label><input id="gk" type="text" value="${esc(data.google.apiKey)}" placeholder="AIza…" autocomplete="off">
+    <label for="gc">ID client OAuth (pour écrire)</label><input id="gc" type="text" value="${esc(data.google.clientId)}" placeholder="…apps.googleusercontent.com" autocomplete="off">
+    <p style="margin-top:14px"><button class="btn" id="saveg">Enregistrer</button> <span id="stg"></span></p></div>`;
   const chk = () => { const id = ytId($('#yt').value); $('#ytok').textContent = $('#yt').value ? (id ? 'Identifiant reconnu : ' + id : 'Lien non reconnu') : ''; };
   $('#yt').oninput = chk; chk();
   $('#save').onclick = async () => {
@@ -215,6 +228,12 @@ function directView() {
     $('#save').disabled = true; status($('#st'), 'Enregistrement…');
     try { await saveData(data.direct.actif ? 'Direct activé' : 'Direct mis à jour'); status($('#st'), SAVED, true); } catch (e) { status($('#st'), e.message, false); }
     $('#save').disabled = false;
+  };
+  $('#saveg').onclick = async () => {
+    data.google = { apiKey: $('#gk').value.trim(), clientId: $('#gc').value.trim() };
+    $('#saveg').disabled = true; status($('#stg'), 'Enregistrement…');
+    try { await saveData('Réglages des commentaires YouTube'); status($('#stg'), SAVED, true); } catch (e) { status($('#stg'), e.message, false); }
+    $('#saveg').disabled = false;
   };
 }
 
