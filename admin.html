@@ -64,6 +64,7 @@ textarea { min-height:70px; resize:vertical; }
     <a class="tab" href="#videos" data-tab="videos">Vidéos</a>
     <a class="tab" href="#photos" data-tab="photos">Photos</a>
     <a class="tab" href="#audios" data-tab="audios">Audios</a>
+    <a class="tab" href="#annonces" data-tab="annonces">Informations et verset</a>
     <a class="tab" href="#infos" data-tab="infos">Réseaux et contact</a>
     <a class="tab" href="./">Voir le site</a>
     <button class="tab" id="logout" type="button">Déconnexion</button>
@@ -113,7 +114,8 @@ async function loadData() {
   d.google = { apiKey: '', clientId: '', ...(d.google || {}) };
   d.direct = { actif: false, titre: 'Culte en direct', description: '', youtube: '', hls: '', ...(d.direct || {}) };
   d.reseaux = { pasteur: {}, eglise: {}, ...(d.reseaux || {}) }; d.reseaux.pasteur = d.reseaux.pasteur || {}; d.reseaux.eglise = d.reseaux.eglise || {};
-  d.contact = d.contact || {}; d.don = { texte: '', lien: '', details: '', ...(d.don || {}) };
+  d.contact = d.contact || {}; d.verset = { texte: '', reference: '', date: '', ...(d.verset || {}) };
+  for (const k of ['infos', 'autres', 'programme']) if (!Array.isArray(d[k])) d[k] = []; d.don = { texte: '', lien: '', details: '', ...(d.don || {}) };
   for (const k of ['videos', 'photos', 'audios']) if (!Array.isArray(d[k])) d[k] = [];
   data = d;
 }
@@ -194,9 +196,9 @@ async function start() {
   if (!data) { try { await loadData(); } catch (e) { store.set('eept_token', ''); cfg.token = ''; return loginView(); } }
   $('#nav').hidden = false;
   tab = location.hash.slice(1) || 'direct';
-  if (!['direct', 'videos', 'photos', 'audios', 'infos'].includes(tab)) tab = 'direct';
+  if (!['direct', 'videos', 'photos', 'audios', 'infos', 'annonces'].includes(tab)) tab = 'direct';
   document.querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
-  ({ direct: directView, videos: videosView, photos: photosView, audios: audiosView, infos: infosView })[tab]();
+  ({ direct: directView, videos: videosView, photos: photosView, audios: audiosView, infos: infosView, annonces: annoncesView })[tab]();
 }
 window.addEventListener('hashchange', () => { if (data) start(); });
 $('#logout').onclick = () => { store.set('eept_token', ''); cfg.token = ''; data = null; loginView(); };
@@ -288,6 +290,49 @@ function infosView() {
     try { await saveData('Réseaux sociaux et contacts'); status($('#sti'), SAVED, true); } catch (e) { status($('#sti'), e.message, false); }
     $('#savei').disabled = false;
   };
+}
+
+/* Informations, verset du jour, programme */
+function annoncesView() {
+  const V = data.verset, TYPES = ['Méditation', 'Prière', 'Pensée', 'Témoignage'];
+  const row = (kind, x, i) => `<div class="item"><div class="t"><b>${esc(x.titre)}</b><span class="meta">${esc(x.date || '')}${x.important ? ' · important' : ''}${x.type ? ' · ' + esc(x.type) : ''}</span>${x.texte ? `<span class="meta" style="display:block">${esc(String(x.texte).slice(0, 120))}</span>` : ''}</div><button class="btn small danger" data-rm="${kind}:${i}">Supprimer</button></div>`;
+  const list = (kind) => data[kind].length ? data[kind].map((x, i) => ({ x, i })).sort((a, b) => String(b.x.date).localeCompare(String(a.x.date))).map(({ x, i }) => row(kind, x, i)).join('') : '<p class="meta">Rien pour le moment.</p>';
+  app.innerHTML = `<div class="panel"><h2>Verset du jour</h2>
+    <label for="vs-t">Texte du verset</label><textarea id="vs-t" maxlength="600" placeholder="Car Dieu a tant aimé le monde…">${esc(V.texte)}</textarea>
+    <label for="vs-r">Référence</label><input id="vs-r" type="text" value="${esc(V.reference)}" placeholder="Jean 3:16">
+    <p style="margin-top:14px"><button class="btn" id="vs-save">Publier le verset</button> <span id="vs-st"></span></p></div>
+    <div class="panel"><h2>Informations (annonces)</h2>
+    <label for="in-t">Titre</label><input id="in-t" type="text" maxlength="150">
+    <div class="grid2"><div><label for="in-d">Date</label><input id="in-d" type="date" value="${today()}"></div><div><label class="sw" style="margin-top:34px"><input type="checkbox" id="in-i"> Annonce importante</label></div></div>
+    <label for="in-x">Texte</label><textarea id="in-x" maxlength="1500"></textarea>
+    <p style="margin-top:14px"><button class="btn" id="in-add">Publier l'annonce</button> <span id="in-st"></span></p>${list('infos')}</div>
+    <div class="panel"><h2>Autres : méditations, prières, pensées</h2>
+    <div class="grid2"><div><label for="au-ty">Type</label><select id="au-ty">${TYPES.map((t) => `<option>${t}</option>`).join('')}</select></div><div><label for="au-d">Date</label><input id="au-d" type="date" value="${today()}"></div></div>
+    <label for="au-t">Titre</label><input id="au-t" type="text" maxlength="150">
+    <label for="au-x">Texte</label><textarea id="au-x" maxlength="2500"></textarea>
+    <p style="margin-top:14px"><button class="btn" id="au-add">Publier</button> <span id="au-st"></span></p>${list('autres')}</div>
+    <div class="panel"><h2>Programme de la semaine</h2>
+    <p class="meta">Une ligne par rendez-vous, au format : <b>Jour | Heure | Titre</b></p>
+    <textarea id="pg" style="min-height:140px" placeholder="Dimanche | 8h00 | Culte d'adoration&#10;Mercredi | 18h30 | Atmosphère de prière">${esc(data.programme.map((x) => [x.jour, x.heure, x.titre].join(' | ')).join('\n'))}</textarea>
+    <p style="margin-top:14px"><button class="btn" id="pg-save">Enregistrer le programme</button> <span id="pg-st"></span></p></div>`;
+  const run = async (btn, st, msg, fn, undo) => {
+    btn.disabled = true; status(st, 'Enregistrement…');
+    try { fn(); await saveData(msg); annoncesView(); } catch (e) { if (undo) undo(); status(st, e.message, false); btn.disabled = false; }
+  };
+  $('#vs-save').onclick = () => { const t = $('#vs-t').value.trim(); if (!t) return status($('#vs-st'), 'Écrivez le verset.', false); const old = { ...data.verset };
+    run($('#vs-save'), $('#vs-st'), 'Verset du jour', () => { data.verset = { texte: t, reference: $('#vs-r').value.trim(), date: today() }; }, () => { data.verset = old; }); };
+  $('#in-add').onclick = () => { const titre = $('#in-t').value.trim(); if (!titre) return status($('#in-st'), 'Donnez un titre.', false);
+    run($('#in-add'), $('#in-st'), 'Nouvelle annonce : ' + titre, () => data.infos.push(clean({ titre, date: $('#in-d').value || today(), texte: $('#in-x').value.trim(), important: $('#in-i').checked || undefined })), () => data.infos.pop()); };
+  $('#au-add').onclick = () => { const titre = $('#au-t').value.trim(), texte = $('#au-x').value.trim(); if (!titre || !texte) return status($('#au-st'), 'Titre et texte requis.', false);
+    run($('#au-add'), $('#au-st'), 'Nouvelle publication : ' + titre, () => data.autres.push({ type: $('#au-ty').value, titre, texte, date: $('#au-d').value || today() }), () => data.autres.pop()); };
+  $('#pg-save').onclick = () => { const old = data.programme;
+    run($('#pg-save'), $('#pg-st'), 'Programme de la semaine', () => { data.programme = $('#pg').value.split('\n').map((l) => l.split('|').map((z) => z.trim())).filter((a) => a[0]).map((a) => ({ jour: a[0], heure: a[1] || '', titre: a.slice(2).join(' | ') })); }, () => { data.programme = old; }); };
+  document.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = async () => {
+    const [kind, i] = b.dataset.rm.split(':'), it = data[kind][+i]; if (!confirm(`Supprimer « ${it.titre} » ?`)) return;
+    data[kind].splice(+i, 1);
+    try { await saveData('Supprimer : ' + it.titre); } catch (e) { data[kind].splice(+i, 0, it); alert(e.message); }
+    annoncesView();
+  }));
 }
 
 /* Liste commune */

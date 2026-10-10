@@ -40,5 +40,13 @@
     "texte": "",
     "lien": "",
     "details": ""
-  }
+  },
+  "verset": {
+    "texte": "",
+    "reference": "",
+    "date": ""
+  },
+  "infos": [],
+  "autres": [],
+  "programme": []
 }
