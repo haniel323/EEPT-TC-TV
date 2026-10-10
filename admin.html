@@ -31,6 +31,7 @@ textarea { min-height:70px; resize:vertical; }
 .btn { display:inline-flex; align-items:center; gap:8px; border:0; border-radius:999px; padding:10px 20px; font-weight:600; background:var(--gold); color:#1b1405; }
 .btn:disabled { opacity:.55; cursor:wait; }
 .btn.small { padding:6px 14px; font-size:.88rem; }
+.btn.stop { background:var(--red); color:#fff; }
 .btn.ghost { background:transparent; color:var(--ink); border:1.5px solid var(--line); }
 .btn.danger { background:transparent; color:var(--red); border:1.5px solid var(--red); }
 .meta { color:var(--muted); font-size:.88rem; }
@@ -200,9 +201,9 @@ $('#logout').onclick = () => { store.set('eept_token', ''); cfg.token = ''; data
 /* Direct */
 function directView() {
   const d = data.direct;
-  app.innerHTML = `<div class="panel"><h2>Direct</h2>
-    <p class="meta">Diffusez avec OBS vers YouTube Live, puis indiquez ici le lien du live. Activez le direct au début du culte et désactivez-le à la fin.</p>
-    <label class="sw"><input type="checkbox" id="actif" ${d.actif ? 'checked' : ''}> Direct en cours (affiche le lecteur sur le site)</label>
+  app.innerHTML = `<div class="panel" id="ctl"></div>
+    <div class="panel"><h2>Réglages du direct</h2>
+    <p class="meta">Diffusez avec OBS vers YouTube Live, puis indiquez ici le lien du live. Utilisez le bouton ci-dessus pour afficher ou couper le direct sur le site.</p>
     <label for="titre">Titre</label><input id="titre" type="text" value="${esc(d.titre)}" maxlength="150">
     <label for="desc">Description / horaires</label><textarea id="desc" maxlength="1000" placeholder="Ex : Culte chaque dimanche à 9h.">${esc(d.description)}</textarea>
     <label for="yt">Lien ou identifiant du live YouTube</label><input id="yt" type="text" value="${esc(d.youtube)}" placeholder="https://www.youtube.com/watch?v=…">
@@ -220,13 +221,27 @@ function directView() {
     <label for="gk">Clé API YouTube</label><input id="gk" type="text" value="${esc(data.google.apiKey)}" placeholder="AIza…" autocomplete="off">
     <label for="gc">ID client OAuth (pour écrire)</label><input id="gc" type="text" value="${esc(data.google.clientId)}" placeholder="…apps.googleusercontent.com" autocomplete="off">
     <p style="margin-top:14px"><button class="btn" id="saveg">Enregistrer</button> <span id="stg"></span></p></div>`;
+  const drawCtl = () => {
+    const on = !!data.direct.actif;
+    $('#ctl').innerHTML = `<div class="row" style="justify-content:space-between"><div><h2 style="margin:0 0 4px">Direct sur le site</h2><span class="${on ? 'err' : 'meta'}" style="font-weight:700">${on ? '● EN DIRECT : le lecteur est affiché sur le site' : 'Hors ligne : aucun direct affiché'}</span></div>
+      <button class="btn ${on ? 'stop' : ''}" id="tog" style="font-size:1.05rem;padding:14px 26px">${on ? '■ Arrêter le direct' : '● Démarrer le direct'}</button></div>
+      <p class="meta" id="ctlmsg" style="margin:10px 0 0"></p>`;
+    $('#tog').onclick = async () => {
+      const turningOn = !data.direct.actif;
+      if (turningOn && !ytId($('#yt').value) && !data.direct.hls) return status($('#ctlmsg'), 'Ajoutez d’abord le lien du live YouTube dans les réglages ci-dessous, puis enregistrez.', false);
+      if (turningOn) data.direct.youtube = ytId($('#yt').value) || data.direct.youtube;
+      data.direct.actif = turningOn; $('#tog').disabled = true; status($('#ctlmsg'), 'Enregistrement…');
+      try { await saveData(turningOn ? 'Direct démarré' : 'Direct arrêté'); drawCtl(); status($('#ctlmsg'), turningOn ? 'Direct démarré ✓ Il apparaît sur le site dans 1 à 2 minutes.' : 'Direct arrêté ✓ Il disparaît du site dans 1 à 2 minutes.', true); }
+      catch (e) { data.direct.actif = !turningOn; drawCtl(); status($('#ctlmsg'), e.message, false); }
+    };
+  };
+  drawCtl();
   const chk = () => { const id = ytId($('#yt').value); $('#ytok').textContent = $('#yt').value ? (id ? 'Identifiant reconnu : ' + id : 'Lien non reconnu') : ''; };
   $('#yt').oninput = chk; chk();
   $('#save').onclick = async () => {
     const yt = $('#yt').value.trim(), id = ytId(yt);
     if (yt && !id) return status($('#st'), 'Lien YouTube non reconnu.', false);
-    if ($('#actif').checked && !id && !d.hls) return status($('#st'), 'Ajoutez le lien du live YouTube avant d’activer le direct.', false);
-    Object.assign(data.direct, { actif: $('#actif').checked, titre: $('#titre').value.trim() || 'Culte en direct', description: $('#desc').value.trim(), youtube: id });
+    Object.assign(data.direct, { titre: $('#titre').value.trim() || 'Culte en direct', description: $('#desc').value.trim(), youtube: id });
     $('#save').disabled = true; status($('#st'), 'Enregistrement…');
     try { await saveData(data.direct.actif ? 'Direct activé' : 'Direct mis à jour'); status($('#st'), SAVED, true); } catch (e) { status($('#st'), e.message, false); }
     $('#save').disabled = false;
