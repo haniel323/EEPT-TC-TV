@@ -7,7 +7,15 @@
     "youtube": "",
     "hls": ""
   },
-  "videos": [],
+  "videos": [
+    {
+      "titre": "MYSTÈRE DU PARDON. Avec rev Samuel Tininfa HASSOU",
+      "date": "2026-10-10",
+      "categorie": "dimanche",
+      "miniature": "videos/1791662630015-pardon.jpg",
+      "url": "videos/1791662630015-pardon.mp4"
+    }
+  ],
   "photos": [],
   "audios": [
     {
