@@ -308,6 +308,10 @@ footer { background: #05090f; margin-top: 64px; padding: 0; border-top: 1px soli
 .foot-grid p { margin: 12px 0 0; max-width: 34ch; }
 .foot-bot { border-top: 1px solid var(--line); padding: 18px 0 30px; font-size: .85rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 760px) { .foot-grid { grid-template-columns: 1fr 1fr; } .foot-grid > :first-child { grid-column: 1 / -1; } .hero-tv .in { padding-top: 120px; } .top .wrap { gap: 4px 12px; } .brand span { font-size: .85rem; } .rail-head .arr { display: none; } }
+.rcard.short { flex-basis: clamp(150px, 16vw, 200px); }
+.rcard.short .im { aspect-ratio: 9/16; }
+.rcard.short .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 36px 10px 10px; background: linear-gradient(transparent, rgba(0,0,0,.85)); font-weight: 700; font-size: .85rem; }
+.follow.don { background: linear-gradient(120deg, #6b4a10, #1a1408 65%); }
 </style>
 </head>
 <body>
@@ -336,7 +340,7 @@ footer { background: #05090f; margin-top: 64px; padding: 0; border-top: 1px soli
     <div><div class="foot-brand"><img src="logo.png" alt="" width="52" height="52"><span>Commission Mass Media TC</span></div><p>La web-télé de l’EEPT Tokoin Centre : cultes, prédications et temps de prière en direct et en replay.</p></div>
     <div><h4>Regarder</h4><a href="#/direct">Direct</a><a href="#/videos">Vidéos</a><a href="#/audios">Audios</a><a href="#/photos">Photos</a></div>
     <div><h4>Nous suivre</h4><div id="foot-soc"><a href="#/reseaux">Réseaux sociaux</a></div></div>
-    <div><h4>Nous joindre</h4><a href="#/contact">Contact</a><div id="foot-con"></div></div>
+    <div><h4>Nous joindre</h4><a href="#/contact">Contact</a><a href="#/don" id="foot-don" hidden>Faire un don</a><div id="foot-con"></div></div>
   </div>
   <div class="foot-bot"><span>© <span id="year"></span> Commission Mass Media TC · EEPT Tokoin Centre</span><span>Église Évangélique Presbytérienne du Togo · 1893</span></div>
 </div></footer>
@@ -398,7 +402,7 @@ setInterval(async () => { const was = live.live; await refreshLive(); if (route(
 
 /* ───────── Routage ───────── */
 const route = () => (location.hash.replace(/^#\/?/, '').split('/')[0] || '');
-const PAGES = { '': home, direct, videos: () => mediaPage('videos'), photos: () => mediaPage('photos'), audios: () => mediaPage('audios'), reseaux, contact };
+const PAGES = { '': home, direct, videos: () => mediaPage('videos'), photos: () => mediaPage('photos'), audios: () => mediaPage('audios'), reseaux, contact, don };
 
 async function render() {
   const r = route() in PAGES ? route() : '';
@@ -423,7 +427,7 @@ const NET = {
 const SITE = {};
 async function loadSite() {
   if (SITE.done) return SITE;
-  try { const c = await (await fetch('contenu.json', { cache: 'no-store' })).json(); SITE.reseaux = c.reseaux || {}; SITE.contact = c.contact || {}; } catch { SITE.reseaux = {}; SITE.contact = {}; }
+  try { const c = await (await fetch('contenu.json', { cache: 'no-store' })).json(); SITE.reseaux = c.reseaux || {}; SITE.contact = c.contact || {}; SITE.don = c.don || {}; } catch { SITE.reseaux = {}; SITE.contact = {}; SITE.don = {}; }
   SITE.done = true; return SITE;
 }
 const safeUrl = (u) => { u = String(u || '').trim(); if (!u) return ''; if (/^(https?:)\/\//i.test(u)) return u; if (/^[a-z]+:/i.test(u)) return ''; return 'https://' + u.replace(/^\/+/, ''); };
@@ -468,8 +472,20 @@ async function contact() {
     if (c.telephone) M.push(`<a href="tel:${esc(String(c.telephone).replace(/[^\d+]/g, ''))}">${esc(c.telephone)}</a>`);
     if (c.email) M.push(`<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`);
     $('#foot-con').innerHTML = M.join('');
+    const dn = S.don || {}; if (dn.lien || dn.details || dn.texte) $('#foot-don').hidden = false;
   });
 })();
+
+async function don() {
+  document.title = 'Faire un don — Commission Mass Media TC';
+  const { don: d } = await loadSite();
+  const L = safeUrl(d.lien);
+  view.innerHTML = `<div class="wrap"><div class="page-title"><h1>Faire un don</h1><p>Soutenir la Commission Mass Media TC, c'est permettre à l'Évangile de toucher davantage de personnes.</p></div>
+    <div class="scard" style="max-width:640px;margin-top:20px">${d.texte ? `<p style="margin-top:0;white-space:pre-line">${esc(d.texte)}</p>` : ''}
+    ${L ? `<p><a class="btn" href="${esc(L)}" target="_blank" rel="noopener">Donner en ligne</a></p>` : ''}
+    ${d.details ? `<h2 style="font-size:1.1rem;margin-top:8px">Autres moyens</h2><p style="white-space:pre-line">${esc(d.details)}</p>` : ''}
+    ${!d.texte && !L && !d.details ? '<p class="empty">Les informations de don seront bientôt disponibles.</p>' : ''}</div></div>`;
+}
 
 /* ───────── Écran d'ouverture ───────── */
 (() => {
@@ -482,11 +498,13 @@ async function contact() {
 
 /* ───────── Pages ───────── */
 async function home() {
-  const [videos, photos, audios] = await Promise.all(['videos', 'photos', 'audios'].map((t) => getJson('/api/media?type=' + t).catch(() => [])));
+  let [videos, photos, audios] = await Promise.all(['videos', 'photos', 'audios'].map((t) => getJson('/api/media?type=' + t).catch(() => [])));
   document.title = 'Commission Mass Media TC';
-  const feat = videos[0];
+  const allVideos = videos; const { don } = await loadSite(); const hasDon = !!(don.lien || don.details || don.texte);
   const rail = (id, title, items, link) => items.length ? `<section class="rail-sec"><div class="rail-head"><h2>${title}</h2><div class="ctl">${link ? `<a href="${link}">Voir tout</a>` : ''}<button class="arr" type="button" data-rail="${id}" data-dir="-1" aria-label="Précédent">‹</button><button class="arr" type="button" data-rail="${id}" data-dir="1" aria-label="Suivant">›</button></div></div><div class="rail" id="${id}">${items.join('')}</div></section>` : '';
   const rc = (v) => `<button class="rcard" data-video="${v.id}"><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="play"><i>${ICON_PLAY}</i></span></span><h3>${esc(v.title)}</h3><span class="meta">${fmtDate(v.createdAt)}</span></button>`;
+  const shorts = videos.filter((v) => v.category === 'shorts'); videos = videos.filter((v) => v.category !== 'shorts');
+  const feat = videos[0];
   const dim = videos.filter((v) => v.category === 'dimanche'), pri = videos.filter((v) => v.category === 'priere'), oth = videos.filter((v) => !v.category);
   const top = videos.slice(0, 5).map((v, i) => `<button class="rcard rtop" data-video="${v.id}"><span class="n">${i + 1}</span><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="cap">${esc(v.title)}</span></span></button>`);
   const bg = feat && feat.thumb ? `<div class="bg" style="background-image:url('${esc(feat.thumb)}')"></div>` : '<div class="bg logo" style="background-image:url(logo.png)"></div>';
@@ -505,13 +523,15 @@ async function home() {
       ${rail('r-dim', 'Cultes du dimanche', dim.map(rc), '#/videos')}
       ${rail('r-pri', 'Temps de prière', pri.map(rc), '#/videos')}
       ${rail('r-oth', 'Autres vidéos', oth.map(rc), '#/videos')}
+      ${rail('r-sh', 'Les Shorts', shorts.map((v) => `<button class="rcard short" data-video="${v.id}"><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="play"><i>${ICON_PLAY}</i></span><span class="cap">${esc(v.title)}</span></span></button>`), '#/videos')}
       ${audios.length ? `<section class="rail-sec"><div class="rail-head"><h2>Prédications et audios</h2><div class="ctl"><a href="#/audios">Voir tout</a></div></div><div class="rail arail">${audios.slice(0, 8).map(audioCard).join('')}</div></section>` : ''}
       ${photos.length ? `<section class="rail-sec"><div class="rail-head"><h2>En photos</h2><div class="ctl"><a href="#/photos">Voir tout</a></div></div><div class="mosaic">${photos.slice(0, 6).map((p, i) => `<button class="photo" data-photo="${i}" aria-label="${esc(p.title)}"><img loading="lazy" src="${esc(p.thumb || p.url)}" alt=""><span>${esc(p.title)}</span></button>`).join('')}</div></section>` : ''}
       ${!videos.length && !audios.length && !photos.length ? '<p class="empty" style="margin-top:40px">Les premiers contenus arrivent bientôt.</p>' : ''}
+      ${hasDon ? '<section class="follow don"><div><h2>Soutenir la web-télé</h2><p>Votre don nous aide à continuer à diffuser les cultes et les messages.</p></div><div class="bt"><a class="btn" href="#/don">Faire un don</a></div></section>' : ''}
       <section class="follow"><div><h2>Restez connectés avec nous</h2><p>Retrouvez nos publications, nos annonces et nos messages sur nos réseaux sociaux.</p></div><div class="bt"><a class="btn" href="#/reseaux">Nos réseaux sociaux</a><a class="btn ghost" href="#/contact">Nous contacter</a></div></section>
     </div>`;
   view.querySelectorAll('[data-rail]').forEach((b) => b.addEventListener('click', () => { const r = document.getElementById(b.dataset.rail); r.scrollBy({ left: +b.dataset.dir * r.clientWidth * .85, behavior: 'smooth' }); }));
-  bindMedia(videos, photos);
+  bindMedia(allVideos, photos);
 }
 
 async function direct() {
@@ -553,11 +573,12 @@ async function mediaPage(type) {
 function grouped(items, type) {
   const defs = type === 'videos' ? [['dimanche', 'Cultes du dimanche'], ['priere', 'Temps de prière']] : [['dimanche', 'Prédications du dimanche'], ['priere', 'Temps de prière']];
   const render = (a) => (type === 'videos' ? `<div class="grid">${a.map(videoCard).join('')}</div>` : `<div class="audio-list">${a.map(audioCard).join('')}</div>`);
-  const other = items.filter((i) => i.category !== 'dimanche' && i.category !== 'priere');
+  const other = items.filter((i) => i.category !== 'dimanche' && i.category !== 'priere' && i.category !== 'shorts');
+  const shorts = type === 'videos' ? items.filter((i) => i.category === 'shorts') : [];
   const sec = (id, title, arr, always) => (arr.length || always
     ? `<section class="part" id="part-${id}"><h2>${title} <span class="count">${arr.length}</span></h2>${arr.length ? render(arr) : '<div class="empty">Rien pour le moment.</div>'}</section>` : '');
   const chips = `<div class="chips">${defs.map(([k, t]) => `<button class="chip" type="button" data-goto="part-${k}">${t}</button>`).join('')}</div>`;
-  return chips + defs.map(([k, t]) => sec(k, t, items.filter((i) => i.category === k), true)).join('') + sec('autres', type === 'videos' ? 'Autres vidéos' : 'Autres audios', other, false);
+  return chips + defs.map(([k, t]) => sec(k, t, items.filter((i) => i.category === k), true)).join('') + sec('shorts', 'Les Shorts', shorts, false) + sec('autres', type === 'videos' ? 'Autres vidéos' : 'Autres audios', other, false);
 }
 
 /* ───────── Composants ───────── */

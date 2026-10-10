@@ -113,7 +113,7 @@ async function loadData() {
   d.google = { apiKey: '', clientId: '', ...(d.google || {}) };
   d.direct = { actif: false, titre: 'Culte en direct', description: '', youtube: '', hls: '', ...(d.direct || {}) };
   d.reseaux = { pasteur: {}, eglise: {}, ...(d.reseaux || {}) }; d.reseaux.pasteur = d.reseaux.pasteur || {}; d.reseaux.eglise = d.reseaux.eglise || {};
-  d.contact = d.contact || {};
+  d.contact = d.contact || {}; d.don = { texte: '', lien: '', details: '', ...(d.don || {}) };
   for (const k of ['videos', 'photos', 'audios']) if (!Array.isArray(d[k])) d[k] = [];
   data = d;
 }
@@ -273,10 +273,16 @@ function infosView() {
       <label for="c-mail">E-mail</label><input id="c-mail" type="text" value="${esc(c.email || '')}" placeholder="contact@…">
       <label for="c-adr">Adresse</label><input id="c-adr" type="text" value="${esc(c.adresse || '')}" placeholder="Tokoin Centre, Lomé, Togo">
       <label for="c-hor">Horaires des cultes</label><textarea id="c-hor" maxlength="500" placeholder="Dimanche 8h–11h · Prière mercredi 18h">${esc(c.horaires || '')}</textarea>
+      <h2 style="margin-top:22px">Soutenir l'église (dons)</h2>
+      <p class="meta">Affiché sur la page « Faire un don ». Indiquez le moyen de votre choix : un lien de paiement, ou vos numéros Mobile Money / coordonnées bancaires (écrits par vous-même). Laissez vide pour masquer la page.</p>
+      <label for="d-txt">Message</label><textarea id="d-txt" maxlength="600" placeholder="Votre soutien nous aide à diffuser l'Évangile.">${esc(data.don.texte || '')}</textarea>
+      <label for="d-lien">Lien de don (facultatif)</label><input id="d-lien" type="text" value="${esc(data.don.lien || '')}" placeholder="https://…">
+      <label for="d-det">Autres moyens (Mobile Money, banque…)</label><textarea id="d-det" maxlength="800" placeholder="Ex : Flooz / T-Money : +228 …">${esc(data.don.details || '')}</textarea>
       <p style="margin-top:14px"><button class="btn" id="savei">Enregistrer</button> <span id="sti"></span></p></div>`;
   $('#savei').onclick = async () => {
     for (const who of ['eglise', 'pasteur']) for (const [k] of NETS) data.reseaux[who][k] = $(`#${who}-${k}`).value.trim();
     data.reseaux.pasteur.nom = $('#pasteur-nom').value.trim();
+    data.don = { texte: $('#d-txt').value.trim(), lien: $('#d-lien').value.trim(), details: $('#d-det').value.trim() };
     data.contact = { telephone: $('#c-tel').value.trim(), whatsapp: $('#c-wa').value.trim(), email: $('#c-mail').value.trim(), adresse: $('#c-adr').value.trim(), horaires: $('#c-hor').value.trim() };
     $('#savei').disabled = true; status($('#sti'), 'Enregistrement…');
     try { await saveData('Réseaux sociaux et contacts'); status($('#sti'), SAVED, true); } catch (e) { status($('#sti'), e.message, false); }
@@ -285,8 +291,8 @@ function infosView() {
 }
 
 /* Liste commune */
-const CATLABEL = { dimanche: 'Dimanche', priere: 'Prière' };
-const catSelect = (id, val, field) => `<select id="${id}"${field ? ' data-f="categorie"' : ''}><option value="dimanche"${val === 'dimanche' ? ' selected' : ''}>Dimanche (culte, prédication)</option><option value="priere"${val === 'priere' ? ' selected' : ''}>Prière</option><option value=""${!val ? ' selected' : ''}>Non classé</option></select>`;
+const CATLABEL = { dimanche: 'Dimanche', priere: 'Prière', shorts: 'Short' };
+const catSelect = (id, val, field, shorts) => `<select id="${id}"${field ? ' data-f="categorie"' : ''}><option value="dimanche"${val === 'dimanche' ? ' selected' : ''}>Dimanche (culte, prédication)</option><option value="priere"${val === 'priere' ? ' selected' : ''}>Prière</option>${shorts ? `<option value="shorts"${val === 'shorts' ? ' selected' : ''}>Short (courte vidéo, ex. verset ou témoignage)</option>` : ''}<option value=""${!val ? ' selected' : ''}>Non classé</option></select>`;
 function listHtml(kind) {
   const arr = data[kind].map((x, i) => ({ x, i })).sort((a, b) => String(b.x.date).localeCompare(String(a.x.date)));
   if (!arr.length) return '<p class="meta">Rien pour le moment.</p>';
@@ -295,7 +301,7 @@ function listHtml(kind) {
     <div class="editor" data-ed="${i}" hidden>
       <label>Titre</label><input type="text" data-f="titre" value="${esc(x.titre)}" maxlength="150">
       <div class="grid2"><div><label>Date</label><input type="date" data-f="date" value="${esc(x.date || '')}"></div>
-      ${kind !== 'photos' ? `<div><label>Catégorie</label>${catSelect('', x.categorie || '', true)}</div>` : ''}</div>
+      ${kind !== 'photos' ? `<div><label>Catégorie</label>${catSelect('', x.categorie || '', true, kind === 'videos')}</div>` : ''}</div>
       <label>Légende</label><textarea data-f="description" maxlength="1000">${esc(x.description || '')}</textarea>
       <p style="margin-top:10px"><button class="btn small" data-save="${i}">Enregistrer les modifications</button></p></div>`).join('');
 }
@@ -347,7 +353,7 @@ function videosView() {
     <label for="vt">Titre</label><input id="vt" type="text" maxlength="150">
     <div class="grid2"><div><label for="vy">… ou lien YouTube (si aucun fichier)</label><input id="vy" type="text" placeholder="https://youtu.be/…"></div>
     <div><label for="vd">Date</label><input id="vd" type="date" value="${today()}"></div></div>
-    <label for="vc">Partie du site</label>${catSelect('vc', 'dimanche')}
+    <label for="vc">Partie du site</label>${catSelect('vc', 'dimanche', false, true)}
     <label for="vx">Légende (facultative, affichée sous la vidéo)</label><textarea id="vx" maxlength="1000" placeholder="Ex : Message du pasteur sur la foi. Texte : Hébreux 11."></textarea>
     <label class="sw" style="margin-top:12px"><input type="checkbox" id="vr"> C'est la rediffusion d'un direct</label>
     <p style="margin-top:14px"><button class="btn" id="add">Ajouter</button> <span id="st"></span></p></div>

@@ -35,5 +35,10 @@
     "email": "",
     "adresse": "",
     "horaires": ""
+  },
+  "don": {
+    "texte": "",
+    "lien": "",
+    "details": ""
   }
 }
