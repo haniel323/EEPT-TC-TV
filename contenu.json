@@ -15,14 +15,14 @@
     "clientId": ""
   },
   "reseaux": {
-    "eglise": {
+    "pasteur": {
+      "nom": "",
       "facebook": "",
       "youtube": "",
       "instagram": "",
       "tiktok": ""
     },
-    "pasteur": {
-      "nom": "",
+    "eglise": {
       "facebook": "",
       "youtube": "",
       "instagram": "",
@@ -42,9 +42,9 @@
     "details": ""
   },
   "verset": {
-    "texte": "",
-    "reference": "",
-    "date": ""
+    "texte": "« Car Dieu a tant aimé le monde qu'il a donné son Fils unique, afin que quiconque croit en lui ne périsse point, mais qu'il ait la vie éternelle. »",
+    "reference": "jean 3 16",
+    "date": "2026-10-10"
   },
   "infos": [],
   "autres": [],
