@@ -9,7 +9,14 @@
   },
   "videos": [],
   "photos": [],
-  "audios": [],
+  "audios": [
+    {
+      "titre": "PRIERE",
+      "date": "2026-10-10",
+      "url": "audios/1791661654613-prayer.mp3",
+      "categorie": "priere"
+    }
+  ],
   "google": {
     "apiKey": "",
     "clientId": ""
