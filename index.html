@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Commission Mass Media TC</title>
-<meta name="description" content="Cultes en direct, prédications, photos et audios de Commission Mass Media TC (EEPT Tokoin Centre).">
+<title>EEPT Tokoin Centre</title>
+<meta name="description" content="Cultes en direct, prédications, photos et audios de EEPT Tokoin Centre.">
 <meta name="theme-color" content="#1257cf">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -418,15 +418,46 @@ input[type=text], input[type=url], input[type=search], textarea, select { backgr
   .hero-tv .in { padding-top: 60px; }
   .cta { padding: 10px 16px; }
 }
+
+/* Menu de navigation mobile (Android / téléphone) */
+.burger { display: none; width: 44px; height: 44px; border-radius: 12px; border: 1px solid #232b3a; background: #181b23; color: #fff; place-items: center; flex: none; }
+.drawer { position: fixed; inset: 0; z-index: 90; }
+.drawer[hidden] { display: none; }
+.dr-bg { position: absolute; inset: 0; background: rgba(0,0,0,.6); animation: drFade .2s ease; }
+.dr-panel { position: absolute; left: 0; top: 0; bottom: 0; width: min(320px, 86vw); background: #0b1018; border-right: 1px solid #232b3a; padding: 16px 16px 20px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; animation: drIn .25s ease; }
+.dr-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 14px; margin-bottom: 6px; border-bottom: 1px solid #232b3a; }
+.dr-brand { display: flex; align-items: center; gap: 10px; color: #fff; text-transform: uppercase; font-size: .85rem; }
+.dr-brand img { border-radius: 50%; background: #fff; }
+.dr-x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #232b3a; background: #181b23; color: #fff; font-size: 1.5rem; line-height: 1; }
+.dr-nav { display: flex; flex-direction: column; gap: 2px; }
+.dl { display: flex; align-items: center; gap: 10px; padding: 14px 14px; border-radius: 12px; color: #fff; text-decoration: none; font-weight: 600; font-size: 1.02rem; }
+.dl:hover, .dl:active { background: #181b23; }
+.dl[aria-current="page"] { background: #181b23; color: #f5c518; box-shadow: inset 3px 0 0 #f5c518; }
+.dr-cta { margin-top: 14px; text-align: center; }
+.dr-foot { margin: auto 0 0; padding-top: 18px; color: var(--muted); font-size: .8rem; }
+body.no-scroll { overflow: hidden; }
+@keyframes drIn { from { transform: translateX(-100%); } to { transform: none; } }
+@keyframes drFade { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 900px) {
+  .burger { display: grid; }
+  .tabs { display: none; }
+  .top .wrap { flex-wrap: nowrap; min-height: 68px; gap: 10px; }
+  .brand { margin-right: auto; min-width: 0; }
+  .brand span { display: inline; max-width: 140px; font-size: .78rem; }
+  .hact { margin-left: 0; }
+  .hact .cta { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .dr-panel, .dr-bg { animation: none; } }
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><div class="s-in"><div class="s-logo"><img src="logo.png" alt="" width="190" height="190"></div><div class="s-name"><span class="w">Commission</span> <span class="w">Mass</span> <span class="w">Media</span> <span class="w">TC</span></div><div class="s-sub">EEPT Tokoin Centre</div></div></div>
+<div id="splash" aria-hidden="true"><div class="s-in"><div class="s-logo"><img src="logo.png" alt="" width="190" height="190"></div><div class="s-name"><span class="w">EEPT</span> <span class="w">Tokoin</span> <span class="w">Centre</span></div><div class="s-sub">Commission Mass-Media</div></div></div>
 <header class="top" id="top">
   <div class="wrap">
+    <button class="burger" id="burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="drawer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     <a class="brand" href="#/">
       <img class="mark" src="logo.png" alt="Logo EEPT" width="44" height="44">
-      <span>Commission Mass Media TC</span>
+      <span>EEPT Tokoin Centre</span>
     </a>
     <nav class="tabs" aria-label="Navigation principale">
       <a class="tab" href="#/" data-route="">Accueil</a>
@@ -443,16 +474,35 @@ input[type=text], input[type=url], input[type=search], textarea, select { backgr
     <div class="hact"><a class="icon-btn" href="#/videos" id="hsearch" aria-label="Rechercher"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a><a class="cta" href="#/don">Faire un don</a></div>
   </div>
 </header>
+<div class="drawer" id="drawer" hidden>
+  <div class="dr-bg" data-close></div>
+  <aside class="dr-panel" role="dialog" aria-label="Menu de navigation">
+    <div class="dr-head"><span class="dr-brand"><img src="logo.png" alt="" width="40" height="40"><b>EEPT Tokoin Centre</b></span><button class="dr-x" type="button" data-close aria-label="Fermer le menu">×</button></div>
+    <nav class="dr-nav">
+      <a class="dl" href="#/" data-route="">Accueil</a>
+      <a class="dl" href="#/direct" data-route="direct"><span class="dot" aria-hidden="true"></span>Direct</a>
+      <a class="dl" href="#/videos" data-route="videos">Vidéos</a>
+      <a class="dl" href="#/photos" data-route="photos">Photos</a>
+      <a class="dl" href="#/audios" data-route="audios">Audios</a>
+      <a class="dl" href="#/infos" data-route="infos">Informations</a>
+      <a class="dl" href="#/verset" data-route="verset">Verset du jour</a>
+      <a class="dl" href="#/reseaux" data-route="reseaux">Réseaux sociaux</a>
+      <a class="dl" href="#/contact" data-route="contact">Contact</a>
+    </nav>
+    <a class="cta dr-cta" href="#/don">Faire un don</a>
+    <p class="dr-foot">© <span class="yr"></span> COMMISSION MASS-MEDIA</p>
+  </aside>
+</div>
 <div id="livebar"></div>
 <main id="view" tabindex="-1"></main>
 <footer><div class="wrap">
   <div class="foot-grid">
-    <div><div class="foot-brand"><img src="logo.png" alt="" width="52" height="52"><span>Commission Mass Media TC</span></div><p>La web-télé de l’EEPT Tokoin Centre : cultes, prédications et temps de prière en direct et en replay.</p></div>
+    <div><div class="foot-brand"><img src="logo.png" alt="" width="52" height="52"><span>EEPT Tokoin Centre</span></div><p>La web-télé de l’église : cultes, prédications et temps de prière en direct et en replay.</p></div>
     <div><h4>Regarder</h4><a href="#/direct">Direct</a><a href="#/videos">Vidéos</a><a href="#/audios">Audios</a><a href="#/photos">Photos</a><a href="#/infos">Informations</a><a href="#/verset">Verset du jour</a></div>
     <div><h4>Nous suivre</h4><div id="foot-soc"><a href="#/reseaux">Réseaux sociaux</a></div></div>
     <div><h4>Nous joindre</h4><a href="#/contact">Contact</a><a href="#/don" id="foot-don" hidden>Faire un don</a><div id="foot-con"></div></div>
   </div>
-  <div class="foot-bot"><span>© <span id="year"></span> Commission Mass Media TC · EEPT Tokoin Centre</span><span>Église Évangélique Presbytérienne du Togo · 1893</span></div>
+  <div class="foot-bot"><span>© <span id="year"></span> COMMISSION MASS-MEDIA</span><span>Église Évangélique Presbytérienne du Togo · 1893</span></div>
 </div></footer>
 <dialog id="dlg"><div class="box"><button class="x" aria-label="Fermer">×</button><div id="dlg-body"></div></div></dialog>
 
@@ -516,7 +566,7 @@ const PAGES = { '': home, direct, videos: () => mediaPage('videos'), photos: () 
 
 async function render() {
   const r = route() in PAGES ? route() : '';
-  document.querySelectorAll('.tab').forEach((a) => {
+  document.querySelectorAll('.tab, .dl').forEach((a) => {
     if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
   stopPlayer();
@@ -547,14 +597,14 @@ function socCard(titre, sous, o) {
   return `<div class="scard"><h2>${esc(titre)}</h2><p class="sub">${esc(sous)}</p>${rows || '<p class="empty">Bientôt disponible.</p>'}</div>`;
 }
 async function reseaux() {
-  document.title = 'Réseaux sociaux — Commission Mass Media TC';
+  document.title = 'Réseaux sociaux — EEPT Tokoin Centre';
   const { reseaux: r } = await loadSite();
   const p = r.pasteur || {}, e = r.eglise || {};
   view.innerHTML = `<div class="wrap"><div class="page-title"><h1>Réseaux sociaux</h1><p>Suivez-nous et partagez nos contenus sur vos réseaux préférés.</p></div>
     <div class="soc-grid">${socCard('Notre église', 'EEPT Tokoin Centre', e)}${socCard(p.nom ? 'Pasteur ' + p.nom.replace(/^pasteur\s+/i, '') : 'Notre pasteur', 'Comptes officiels du pasteur', p)}</div></div>`;
 }
 async function contact() {
-  document.title = 'Contact — Commission Mass Media TC';
+  document.title = 'Contact — EEPT Tokoin Centre';
   const { contact: c } = await loadSite();
   const tel = String(c.telephone || '').trim(), wa = String(c.whatsapp || '').replace(/[^\d]/g, ''), mail = String(c.email || '').trim();
   const row = (cls, ic, label, val, href) => `<a class="soc" ${href ? `href="${esc(href)}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}` : 'style="pointer-events:none"'}><span class="ic ${cls}">${ic}</span><span>${label}<small>${esc(val)}</small></span></a>`;
@@ -566,7 +616,7 @@ async function contact() {
     c.horaires && row('cl', SVG('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'), 'Horaires des cultes', c.horaires, '')
   ].filter(Boolean).join('');
   view.innerHTML = `<div class="wrap"><div class="page-title"><h1>Contact</h1><p>Une question, une demande de prière ou un témoignage ? Écrivez-nous.</p></div>
-    <div class="soc-grid" style="grid-template-columns:minmax(280px,560px)"><div class="scard"><h2>Commission Mass Media TC</h2><p class="sub">EEPT Tokoin Centre</p>${rows || '<p class="empty">Les coordonnées seront bientôt disponibles.</p>'}</div></div></div>`;
+    <div class="soc-grid" style="grid-template-columns:minmax(280px,560px)"><div class="scard"><h2>EEPT Tokoin Centre</h2><p class="sub">Commission Mass-Media</p>${rows || '<p class="empty">Les coordonnées seront bientôt disponibles.</p>'}</div></div></div>`;
 }
 
 /* ───────── En-tête et pied de page dynamiques ───────── */
@@ -606,13 +656,13 @@ function bindShare(v) {
   }));
 }
 async function infos() {
-  document.title = 'Informations — Commission Mass Media TC';
+  document.title = 'Informations — EEPT Tokoin Centre';
   const { infos: inf } = await loadSite();
   const items = inf.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
   view.innerHTML = `<div class="wrap"><div class="page-title"><h1>Informations</h1><p>Annonces et nouvelles de l’église.</p></div><div class="infos-box" style="margin:20px 0 0;max-width:820px">${items.length ? items.map((n) => `<div class="news">${n.important ? '<span class="tag imp">Important</span>' : ''}<b>${esc(n.titre)}</b><span>${esc(fmtD(n.date))}</span>${n.texte ? `<p>${esc(n.texte)}</p>` : ''}</div>`).join('') : '<p class="empty" style="margin:0">Aucune annonce pour le moment.</p>'}</div></div>`;
 }
 async function versetPage() {
-  document.title = 'Verset du jour — Commission Mass Media TC';
+  document.title = 'Verset du jour — EEPT Tokoin Centre';
   const { verset: v, autres } = await loadSite();
   const items = autres.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
   view.innerHTML = `<div class="wrap"><div class="page-title"><h1>Verset du jour</h1><p>Une parole pour nourrir votre journée, et d’autres méditations.</p></div>
@@ -623,15 +673,26 @@ async function versetPage() {
 }
 
 async function don() {
-  document.title = 'Faire un don — Commission Mass Media TC';
+  document.title = 'Faire un don — EEPT Tokoin Centre';
   const { don: d } = await loadSite();
   const L = safeUrl(d.lien);
-  view.innerHTML = `<div class="wrap"><div class="page-title"><h1>Faire un don</h1><p>Soutenir la Commission Mass Media TC, c'est permettre à l'Évangile de toucher davantage de personnes.</p></div>
+  view.innerHTML = `<div class="wrap"><div class="page-title"><h1>Faire un don</h1><p>Soutenir la web-télé de l’EEPT Tokoin Centre, c'est permettre à l'Évangile de toucher davantage de personnes.</p></div>
     <div class="scard" style="max-width:640px;margin-top:20px">${d.texte ? `<p style="margin-top:0;white-space:pre-line">${esc(d.texte)}</p>` : ''}
     ${L ? `<p><a class="btn" href="${esc(L)}" target="_blank" rel="noopener">Donner en ligne</a></p>` : ''}
     ${d.details ? `<h2 style="font-size:1.1rem;margin-top:8px">Autres moyens</h2><p style="white-space:pre-line">${esc(d.details)}</p>` : ''}
     ${!d.texte && !L && !d.details ? '<p class="empty">Les informations de don seront bientôt disponibles.</p>' : ''}</div></div>`;
 }
+
+/* ───────── Menu mobile ───────── */
+(() => {
+  const dr = document.getElementById('drawer'), bt = document.getElementById('burger');
+  const open = (o) => { dr.hidden = !o; bt.setAttribute('aria-expanded', String(o)); document.body.classList.toggle('no-scroll', o); if (o) dr.querySelector('.dl[aria-current="page"], .dl').focus(); else bt.focus(); };
+  bt.addEventListener('click', () => open(dr.hidden));
+  dr.addEventListener('click', (e) => { if (e.target.closest('[data-close]') || e.target.closest('a')) open(false); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !dr.hidden) open(false); });
+  addEventListener('hashchange', () => { if (!dr.hidden) open(false); });
+  document.querySelectorAll('.yr').forEach((y) => { y.textContent = new Date().getFullYear(); });
+})();
 
 /* ───────── Écran d'ouverture ───────── */
 (() => {
@@ -645,7 +706,7 @@ async function don() {
 /* ───────── Pages ───────── */
 async function home() {
   let [videos, photos, audios] = await Promise.all(['videos', 'photos', 'audios'].map((t) => getJson('/api/media?type=' + t).catch(() => [])));
-  document.title = 'Commission Mass Media TC';
+  document.title = 'EEPT Tokoin Centre';
   const allVideos = videos; const { don, verset: ver, infos: inf, programme: prog } = await loadSite(); const hasDon = !!(don.lien || don.details || don.texte);
   const rail = (id, title, items, link) => items.length ? `<section class="rail-sec"><div class="rail-head"><h2>${title}</h2><div class="ctl">${link ? `<a href="${link}">Voir tout</a>` : ''}<button class="arr" type="button" data-rail="${id}" data-dir="-1" aria-label="Précédent">‹</button><button class="arr" type="button" data-rail="${id}" data-dir="1" aria-label="Suivant">›</button></div></div><div class="rail" id="${id}">${items.join('')}</div></section>` : '';
   const rc = (v) => `<button class="rcard" data-video="${v.id}"><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="play"><i>${ICON_PLAY}</i></span></span><h3>${esc(v.title)}</h3><span class="meta">${fmtDate(v.createdAt)}</span></button>`;
@@ -654,11 +715,11 @@ async function home() {
   const dim = videos.filter((v) => v.category === 'dimanche'), pri = videos.filter((v) => v.category === 'priere'), oth = videos.filter((v) => !v.category);
   const top = videos.slice(0, 5).map((v, i) => `<button class="rcard rtop" data-video="${v.id}"><span class="n">${i + 1}</span><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="cap">${esc(v.title)}</span></span></button>`);
   const bg = feat && feat.thumb ? `<div class="bg" style="background-image:url('${esc(feat.thumb)}')"></div>` : '<div class="bg logo" style="background-image:url(logo.png)"></div>';
-  const heroTitle = live.live ? live.title : feat ? feat.title : 'Commission Mass Media TC';
+  const heroTitle = live.live ? live.title : feat ? feat.title : 'EEPT Tokoin Centre';
   const heroText = live.live ? (live.description || 'Rejoignez-nous en direct.') : feat ? (feat.description || 'Le dernier message de notre église.') : 'Cultes, prédications et temps de prière de l’EEPT Tokoin Centre, en direct et en replay.';
   view.innerHTML = `
     <section class="hero-tv">${bg}<div class="wrap in">
-      ${live.live ? '<span class="kicker live">● En direct</span>' : `<span class="kicker">${feat ? 'À la une' : 'EEPT Tokoin Centre'}</span>`}
+      ${live.live ? '<span class="kicker live">● En direct</span>' : `<span class="kicker">${feat ? 'À la une' : 'Web-télé'}</span>`}
       <h1>${esc(heroTitle)}</h1><p>${esc(heroText)}</p>
       <div class="actions">${live.live ? '<a class="btn light" href="#/direct">▶ Regarder le direct</a>' : feat ? `<button class="btn light" type="button" data-video="${feat.id}">▶ Regarder</button>` : '<a class="btn light" href="#/direct">▶ Le direct</a>'}
       <a class="btn glass" href="${live.live ? '#/videos' : '#/direct'}">${live.live ? 'Toutes les vidéos' : 'Le direct'}</a></div>
@@ -683,7 +744,7 @@ async function home() {
 }
 
 async function direct() {
-  document.title = 'Direct — Commission Mass Media TC';
+  document.title = 'Direct — EEPT Tokoin Centre';
   const replays = (await getJson('/api/media?type=videos').catch(() => [])).filter((v) => v.source === 'direct').slice(0, 6);
   view.innerHTML = `
     <div class="wrap">
@@ -707,7 +768,7 @@ async function direct() {
 async function mediaPage(type) {
   const items = await getJson('/api/media?type=' + type).catch(() => []);
   const T = { videos: ['Vidéos', 'Prédications, enseignements et rediffusions de nos cultes.'], photos: ['Photos', 'Les moments forts de la vie de l’église.'], audios: ['Audios', 'Écoutez les messages et les temps de louange où que vous soyez.'] }[type];
-  document.title = `${T[0]} — Commission Mass Media TC`;
+  document.title = `${T[0]} — EEPT Tokoin Centre`;
   const body = type === 'videos' || type === 'audios' ? grouped(items, type)
     : !items.length ? `<div class="empty">Rien à afficher pour le moment.</div>`
     : type === 'photos' ? `<div class="grid photos">${items.map((p, i) => `<button class="photo" data-photo="${i}" aria-label="${esc(p.title)}"><img loading="lazy" src="${p.thumb || p.url}" alt="${esc(p.title)}"><span>${esc(p.title)}</span></button>`).join('')}</div>`
