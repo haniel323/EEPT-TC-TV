@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Administration — EEPT Tokoin Centre</title>
+<meta name="theme-color" content="#0a2540">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d4a24c'/%3E%3Cpath d='M14 6h4v7h7v4h-7v9h-4v-9H7v-4h7z' fill='%230a2540'/%3E%3C/svg%3E">
+<style>
+:root { --navy:#0a2540; --blue:#034576; --blue-soft:#e6eef5; --gold:#d4a24c; --cream:#f7f4ee; --paper:#fff; --ink:#14212e; --muted:#5b6b7b; --line:#e3ddd1; --red:#d93a3a; --green:#1f7a4d; --radius:14px; --shadow:0 1px 2px rgba(10,37,64,.06),0 8px 24px rgba(10,37,64,.08); --serif:Georgia,'Times New Roman',serif; --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
+@media (prefers-color-scheme: dark) { :root { --cream:#0c1824; --paper:#12212f; --ink:#eef2f6; --muted:#9fb0c1; --line:#223548; --blue-soft:#16304a; --green:#5fd08f; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--cream); color:var(--ink); font:16px/1.55 var(--sans); }
+button { font:inherit; cursor:pointer; }
+.top { background:var(--navy); color:#fff; border-bottom:3px solid var(--gold); }
+.wrap { width:min(900px,100% - 32px); margin-inline:auto; }
+.top .wrap { display:flex; align-items:center; gap:16px; flex-wrap:wrap; min-height:60px; padding-block:6px; }
+.brand { font-family:var(--serif); font-weight:700; font-size:1.1rem; margin-right:auto; color:#fff; text-decoration:none; }
+.top a.tab, .top button.tab { color:#cfdbe8; text-decoration:none; padding:7px 14px; border-radius:999px; font-size:.95rem; background:none; border:0; }
+.top a.tab:hover, .top button.tab:hover { background:rgba(255,255,255,.1); color:#fff; }
+nav { display:flex; gap:4px; flex-wrap:wrap; }
+nav .tab[aria-current] { background:#fff; color:var(--navy); }
+main { padding-block:24px 56px; }
+.panel { background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); margin-bottom:18px; }
+h1,h2 { font-family:var(--serif); line-height:1.2; margin:0 0 10px; }
+h2 { font-size:1.3rem; }
+label { display:block; font-weight:600; font-size:.9rem; margin:12px 0 4px; }
+input[type=text],input[type=password],input[type=date],input[type=url],textarea { width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; background:var(--cream); color:var(--ink); font:inherit; }
+textarea { min-height:70px; resize:vertical; }
+.btn { display:inline-flex; align-items:center; gap:8px; border:0; border-radius:999px; padding:10px 20px; font-weight:600; background:var(--gold); color:#1b1405; }
+.btn:disabled { opacity:.55; cursor:wait; }
+.btn.small { padding:6px 14px; font-size:.88rem; }
+.btn.ghost { background:transparent; color:var(--ink); border:1.5px solid var(--line); }
+.btn.danger { background:transparent; color:var(--red); border:1.5px solid var(--red); }
+.meta { color:var(--muted); font-size:.88rem; }
+.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media (max-width:600px){ .grid2{grid-template-columns:1fr;} }
+.item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); }
+.item img, .item .ph { width:64px; height:44px; object-fit:cover; border-radius:8px; background:var(--blue-soft); flex:none; }
+.item .t { flex:1; min-width:0; }
+.item .t b { display:block; overflow-wrap:anywhere; }
+.note { background:var(--blue-soft); border-radius:10px; padding:10px 14px; font-size:.92rem; }
+.ok { color:var(--green); font-weight:600; }
+.err { color:var(--red); font-weight:600; }
+.sw { display:flex; gap:10px; align-items:center; font-weight:600; margin:0; }
+.sw input { width:20px; height:20px; }
+.steps { padding-left:20px; margin:8px 0 0; }
+.steps li { margin:6px 0; }
+.progress { height:8px; border-radius:99px; background:var(--line); overflow:hidden; margin-top:6px; }
+.progress i { display:block; height:100%; width:0; background:var(--gold); }
+:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="./">EEPT Tokoin Centre · Administration</a>
+  <nav id="nav" hidden aria-label="Administration">
+    <a class="tab" href="#direct" data-tab="direct">Direct</a>
+    <a class="tab" href="#videos" data-tab="videos">Vidéos</a>
+    <a class="tab" href="#photos" data-tab="photos">Photos</a>
+    <a class="tab" href="#audios" data-tab="audios">Audios</a>
+    <a class="tab" href="./">Voir le site</a>
+    <button class="tab" id="logout" type="button">Déconnexion</button>
+  </nav>
+</div></header>
+<main class="wrap" id="app"></main>
+
+<script>
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const app = $('#app');
+const store = {
+  get(k) { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
+  set(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {} },
+};
+
+/* ───── Dépôt GitHub détecté depuis l'adresse du site ───── */
+const detected = (() => {
+  const h = location.hostname;
+  if (h.endsWith('.github.io')) return { owner: h.split('.')[0], repo: location.pathname.split('/')[1] || (h.split('.')[0] + '.github.io') };
+  return { owner: '', repo: '' };
+})();
+let cfg = { owner: store.get('eept_owner') || detected.owner, repo: store.get('eept_repo') || detected.repo, token: store.get('eept_token') };
+let data = null, sha = null, tab = 'direct';
+
+const b64 = (s) => btoa(unescape(encodeURIComponent(s)));
+const unb64 = (s) => decodeURIComponent(escape(atob(s.replace(/\s/g, ''))));
+
+async function gh(path, opts = {}) {
+  const r = await fetch('https://api.github.com' + path, {
+    ...opts,
+    headers: { Authorization: 'Bearer ' + cfg.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(opts.body ? { 'Content-Type': 'application/json' } : {}) },
+  });
+  if (!r.ok) {
+    let m = r.status + ''; try { m = (await r.json()).message || m; } catch {}
+    const e = new Error(m); e.status = r.status; throw e;
+  }
+  return r.status === 204 ? null : r.json();
+}
+const repoPath = () => `/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`;
+
+async function loadData() {
+  const j = await gh(`${repoPath()}/contents/contenu.json?t=${Date.now()}`);
+  sha = j.sha;
+  let d = {}; try { d = JSON.parse(unb64(j.content)); } catch {}
+  d.direct = { actif: false, titre: 'Culte en direct', description: '', youtube: '', hls: '', ...(d.direct || {}) };
+  for (const k of ['videos', 'photos', 'audios']) if (!Array.isArray(d[k])) d[k] = [];
+  data = d;
+}
+async function saveData(msg) {
+  const body = { message: msg, content: b64(JSON.stringify(data, null, 2) + '\n'), sha };
+  try {
+    const j = await gh(`${repoPath()}/contents/contenu.json`, { method: 'PUT', body: JSON.stringify(body) });
+    sha = j.content.sha;
+  } catch (e) {
+    if (e.status === 409 || e.status === 422) throw new Error('Le fichier a changé entre-temps. Rechargez la page puis recommencez.');
+    throw e;
+  }
+}
+async function putFile(path, base64, msg) {
+  await gh(`${repoPath()}/contents/${path.split('/').map(encodeURIComponent).join('/')}`, { method: 'PUT', body: JSON.stringify({ message: msg, content: base64 }) });
+}
+async function deleteFile(path) {
+  try {
+    const p = `${repoPath()}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+    const j = await gh(p);
+    await gh(p, { method: 'DELETE', body: JSON.stringify({ message: 'Supprimer ' + path, sha: j.sha }) });
+  } catch (e) { /* fichier déjà absent */ }
+}
+
+/* ───── Outils ───── */
+function ytId(v) {
+  v = String(v || '').trim(); if (!v) return '';
+  const m = v.match(/(?:youtu\.be\/|[?&]v=|\/live\/|\/embed\/|\/shorts\/)([\w-]{11})/);
+  if (m) return m[1];
+  return /^[\w-]{11}$/.test(v) ? v : '';
+}
+const today = () => new Date().toISOString().slice(0, 10);
+const slug = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'fichier';
+const fileB64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+async function resizeImage(file, max = 1600) {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise((res) => c.toBlob(res, 'image/jpeg', 0.85));
+}
+function status(el, msg, ok) { el.className = ok === false ? 'err' : ok ? 'ok' : 'meta'; el.textContent = msg; }
+const SAVED = 'Enregistré ✓ Le site se met à jour dans 1 à 2 minutes.';
+
+/* ───── Écran de connexion ───── */
+function loginView() {
+  $('#nav').hidden = true;
+  app.innerHTML = `<div class="panel"><h1>Connexion</h1>
+    <p class="meta">Cette page modifie le fichier <b>contenu.json</b> de votre dépôt GitHub. Elle a besoin d'une clé personnelle GitHub (un « token »), que vous seul possédez.</p>
+    <div class="note"><b>Créer la clé (une seule fois)</b><ol class="steps">
+      <li>Ouvrez <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+      <li>Nom : <i>Administration du site</i>. Expiration : à votre choix (ex. 1 an).</li>
+      <li><b>Repository access</b> : « Only select repositories », puis choisissez votre dépôt du site.</li>
+      <li><b>Permissions → Repository permissions → Contents</b> : « Read and write ».</li>
+      <li>Cliquez sur « Generate token » et copiez la clé (elle commence par <code>github_pat_</code>).</li></ol></div>
+    <label for="tok">Clé GitHub</label><input id="tok" type="password" autocomplete="off" placeholder="github_pat_…">
+    <div class="grid2"><div><label for="own">Compte GitHub</label><input id="own" type="text" value="${esc(cfg.owner)}"></div>
+    <div><label for="rep">Nom du dépôt</label><input id="rep" type="text" value="${esc(cfg.repo)}"></div></div>
+    <label class="sw" style="margin-top:14px"><input type="checkbox" id="rem" checked> Rester connecté sur cet ordinateur</label>
+    <p class="meta" id="msg" role="alert" style="min-height:1.4em"></p>
+    <button class="btn" id="go">Se connecter</button></div>`;
+  $('#go').onclick = async () => {
+    cfg = { owner: $('#own').value.trim(), repo: $('#rep').value.trim(), token: $('#tok').value.trim() };
+    const m = $('#msg'); status(m, 'Vérification…');
+    try {
+      const r = await gh(repoPath());
+      if (!r.permissions || !r.permissions.push) throw new Error("Cette clé n'a pas le droit d'écrire dans ce dépôt (permission « Contents : Read and write »).");
+      await loadData();
+      if ($('#rem').checked) { store.set('eept_token', cfg.token); store.set('eept_owner', cfg.owner); store.set('eept_repo', cfg.repo); }
+      start();
+    } catch (e) { status(m, e.status === 401 ? 'Clé refusée. Vérifiez-la.' : e.status === 404 ? 'Dépôt introuvable (nom ou accès de la clé).' : e.message, false); }
+  };
+}
+
+/* ───── Application ───── */
+async function start() {
+  if (!cfg.token) return loginView();
+  if (!data) { try { await loadData(); } catch (e) { store.set('eept_token', ''); cfg.token = ''; return loginView(); } }
+  $('#nav').hidden = false;
+  tab = location.hash.slice(1) || 'direct';
+  if (!['direct', 'videos', 'photos', 'audios'].includes(tab)) tab = 'direct';
+  document.querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  ({ direct: directView, videos: videosView, photos: photosView, audios: audiosView })[tab]();
+}
+window.addEventListener('hashchange', () => { if (data) start(); });
+$('#logout').onclick = () => { store.set('eept_token', ''); cfg.token = ''; data = null; loginView(); };
+
+/* Direct */
+function directView() {
+  const d = data.direct;
+  app.innerHTML = `<div class="panel"><h2>Direct</h2>
+    <p class="meta">Diffusez avec OBS vers YouTube Live, puis indiquez ici le lien du live. Activez le direct au début du culte et désactivez-le à la fin.</p>
+    <label class="sw"><input type="checkbox" id="actif" ${d.actif ? 'checked' : ''}> Direct en cours (affiche le lecteur sur le site)</label>
+    <label for="titre">Titre</label><input id="titre" type="text" value="${esc(d.titre)}" maxlength="150">
+    <label for="desc">Description / horaires</label><textarea id="desc" maxlength="1000" placeholder="Ex : Culte chaque dimanche à 9h.">${esc(d.description)}</textarea>
+    <label for="yt">Lien ou identifiant du live YouTube</label><input id="yt" type="text" value="${esc(d.youtube)}" placeholder="https://www.youtube.com/watch?v=…">
+    <p class="meta" id="ytok"></p>
+    <p style="margin-top:14px"><button class="btn" id="save">Enregistrer</button> <span id="st"></span></p></div>`;
+  const chk = () => { const id = ytId($('#yt').value); $('#ytok').textContent = $('#yt').value ? (id ? 'Identifiant reconnu : ' + id : 'Lien non reconnu') : ''; };
+  $('#yt').oninput = chk; chk();
+  $('#save').onclick = async () => {
+    const yt = $('#yt').value.trim(), id = ytId(yt);
+    if (yt && !id) return status($('#st'), 'Lien YouTube non reconnu.', false);
+    if ($('#actif').checked && !id && !d.hls) return status($('#st'), 'Ajoutez le lien du live YouTube avant d’activer le direct.', false);
+    Object.assign(data.direct, { actif: $('#actif').checked, titre: $('#titre').value.trim() || 'Culte en direct', description: $('#desc').value.trim(), youtube: id });
+    $('#save').disabled = true; status($('#st'), 'Enregistrement…');
+    try { await saveData(data.direct.actif ? 'Direct activé' : 'Direct mis à jour'); status($('#st'), SAVED, true); } catch (e) { status($('#st'), e.message, false); }
+    $('#save').disabled = false;
+  };
+}
+
+/* Liste commune */
+function listHtml(kind) {
+  const arr = data[kind].map((x, i) => ({ x, i })).sort((a, b) => String(b.x.date).localeCompare(String(a.x.date)));
+  if (!arr.length) return '<p class="meta">Rien pour le moment.</p>';
+  return arr.map(({ x, i }) => `<div class="item"><div class="t"><b>${esc(x.titre)}</b><span class="meta">${esc(x.date || '')}${x.direct ? ' · rediffusion du direct' : ''}</span></div>
+    <button class="btn small ghost" data-ren="${i}">Renommer</button><button class="btn small danger" data-del="${i}">Supprimer</button></div>`).join('');
+}
+function bindList(kind, label) {
+  document.querySelectorAll('[data-ren]').forEach((b) => (b.onclick = async () => {
+    const it = data[kind][+b.dataset.ren]; const t = prompt('Nouveau titre :', it.titre);
+    if (!t || !t.trim()) return; it.titre = t.trim();
+    try { await saveData('Renommer : ' + it.titre); } catch (e) { alert(e.message); }
+    start();
+  }));
+  document.querySelectorAll('[data-del]').forEach((b) => (b.onclick = async () => {
+    const it = data[kind][+b.dataset.del];
+    if (!confirm(`Supprimer « ${it.titre} » ?`)) return;
+    data[kind].splice(+b.dataset.del, 1);
+    try {
+      await saveData('Supprimer : ' + it.titre);
+      if (it.url && /^(photos|audios)\//.test(it.url)) await deleteFile(it.url);
+    } catch (e) { alert(e.message); }
+    start();
+  }));
+}
+
+/* Vidéos */
+function videosView() {
+  app.innerHTML = `<div class="panel"><h2>Ajouter une vidéo</h2>
+    <p class="meta">Mettez d'abord la vidéo sur YouTube (« Non répertoriée » si vous ne voulez pas qu'elle soit publique), puis collez son lien ici.</p>
+    <label for="vt">Titre</label><input id="vt" type="text" maxlength="150">
+    <div class="grid2"><div><label for="vy">Lien YouTube</label><input id="vy" type="text" placeholder="https://youtu.be/…"></div>
+    <div><label for="vd">Date</label><input id="vd" type="date" value="${today()}"></div></div>
+    <label for="vx">Description (facultative)</label><textarea id="vx" maxlength="1000"></textarea>
+    <label class="sw" style="margin-top:12px"><input type="checkbox" id="vr"> C'est la rediffusion d'un direct</label>
+    <p style="margin-top:14px"><button class="btn" id="add">Ajouter</button> <span id="st"></span></p></div>
+    <div class="panel"><h2>Vidéos publiées</h2>${listHtml('videos')}</div>`;
+  $('#add').onclick = async () => {
+    const titre = $('#vt').value.trim(), id = ytId($('#vy').value);
+    if (!titre) return status($('#st'), 'Donnez un titre.', false);
+    if (!id) return status($('#st'), 'Lien YouTube non reconnu.', false);
+    data.videos.push({ titre, date: $('#vd').value || today(), youtube: id, description: $('#vx').value.trim(), ...($('#vr').checked ? { direct: true } : {}) });
+    $('#add').disabled = true; status($('#st'), 'Enregistrement…');
+    try { await saveData('Ajouter la vidéo : ' + titre); start(); } catch (e) { data.videos.pop(); status($('#st'), e.message, false); $('#add').disabled = false; }
+  };
+  bindList('videos');
+}
+
+/* Photos */
+function photosView() {
+  app.innerHTML = `<div class="panel"><h2>Ajouter des photos</h2>
+    <p class="meta">Les photos sont réduites automatiquement (1600 px) pour que le site reste rapide.</p>
+    <label for="pf">Photos</label><input id="pf" type="file" accept="image/*" multiple>
+    <div class="grid2"><div><label for="pt">Titre (facultatif)</label><input id="pt" type="text" maxlength="150" placeholder="Ex : Baptême du 5 octobre"></div>
+    <div><label for="pd">Date</label><input id="pd" type="date" value="${today()}"></div></div>
+    <div class="progress"><i id="bar"></i></div>
+    <p style="margin-top:14px"><button class="btn" id="add">Envoyer</button> <span id="st"></span></p></div>
+    <div class="panel"><h2>Photos publiées</h2>${listHtml('photos')}</div>`;
+  $('#add').onclick = async () => {
+    const files = [...$('#pf').files]; if (!files.length) return status($('#st'), 'Choisissez au moins une photo.', false);
+    $('#add').disabled = true; let n = 0;
+    try {
+      for (const f of files) {
+        status($('#st'), `Envoi ${n + 1} / ${files.length}…`);
+        const blob = await resizeImage(f); const path = `photos/${Date.now()}-${slug(f.name)}.jpg`;
+        await putFile(path, await fileB64(blob), 'Ajouter la photo ' + f.name);
+        data.photos.push({ titre: $('#pt').value.trim() || f.name.replace(/\.[^.]+$/, ''), date: $('#pd').value || today(), url: path });
+        $('#bar').style.width = Math.round((++n / files.length) * 100) + '%';
+      }
+      await saveData(`Ajouter ${n} photo(s)`); start();
+    } catch (e) {
+      if (n) { try { await saveData(`Ajouter ${n} photo(s)`); } catch {} }
+      status($('#st'), e.message, false); $('#add').disabled = false;
+    }
+  };
+  bindList('photos');
+}
+
+/* Audios */
+function audiosView() {
+  app.innerHTML = `<div class="panel"><h2>Ajouter un audio</h2>
+    <p class="meta">Fichier MP3 ou M4A jusqu'à 25 Mo (environ 25 minutes en qualité correcte). Pour un fichier plus gros, collez un lien direct vers le fichier.</p>
+    <label for="af">Fichier audio</label><input id="af" type="file" accept="audio/*,.mp3,.m4a">
+    <label for="au">… ou lien direct vers le fichier</label><input id="au" type="url" placeholder="https://…/message.mp3">
+    <div class="grid2"><div><label for="at">Titre</label><input id="at" type="text" maxlength="150"></div>
+    <div><label for="ad">Date</label><input id="ad" type="date" value="${today()}"></div></div>
+    <p style="margin-top:14px"><button class="btn" id="add">Ajouter</button> <span id="st"></span></p></div>
+    <div class="panel"><h2>Audios publiés</h2>${listHtml('audios')}</div>`;
+  $('#add').onclick = async () => {
+    const f = $('#af').files[0], link = $('#au').value.trim();
+    let titre = $('#at').value.trim() || (f ? f.name.replace(/\.[^.]+$/, '') : '');
+    if (!titre) return status($('#st'), 'Donnez un titre.', false);
+    if (!f && !link) return status($('#st'), 'Choisissez un fichier ou collez un lien.', false);
+    if (f && f.size > 25 * 1048576) return status($('#st'), 'Fichier trop gros (25 Mo maximum). Utilisez un lien direct.', false);
+    $('#add').disabled = true; status($('#st'), 'Envoi en cours…');
+    try {
+      let url = link;
+      if (f) { const ext = (f.name.match(/\.[^.]+$/) || ['.mp3'])[0].toLowerCase(); url = `audios/${Date.now()}-${slug(f.name)}${ext}`; await putFile(url, await fileB64(f), 'Ajouter l’audio ' + f.name); }
+      data.audios.push({ titre, date: $('#ad').value || today(), url });
+      await saveData('Ajouter l’audio : ' + titre); start();
+    } catch (e) { status($('#st'), e.message, false); $('#add').disabled = false; }
+  };
+  bindList('audios');
+}
+
+start();
+</script>
+</body>
+</html>
