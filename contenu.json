@@ -1,7 +1,7 @@
 {
   "_aide": "Ajoutez vos contenus dans les listes ci-dessous. Voir les explications données avec ce fichier.",
   "direct": {
-    "actif": false,
+    "actif": true,
     "titre": "ADORATION",
     "description": "",
     "youtube": "lCM7N9sho8s",
