@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EEPT Tokoin Centre</title>
+<meta name="description" content="Cultes en direct, prédications, photos et audios de EEPT Tokoin Centre.">
+<meta name="theme-color" content="#0a2540">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d4a24c'/%3E%3Cpath d='M14 6h4v7h7v4h-7v9h-4v-9H7v-4h7z' fill='%230a2540'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0a2540; --blue: #034576; --blue-soft: #e6eef5; --gold: #d4a24c; --gold-deep: #a97b22;
+  --cream: #f7f4ee; --paper: #ffffff; --ink: #14212e; --muted: #5b6b7b; --line: #e3ddd1; --red: #d93a3a;
+  --radius: 14px; --shadow: 0 1px 2px rgba(10,37,64,.06), 0 8px 24px rgba(10,37,64,.08);
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif; --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cream: #0c1824; --paper: #12212f; --ink: #eef2f6; --muted: #9fb0c1; --line: #223548; --blue-soft: #16304a; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);; color-scheme: dark } }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--cream); color: var(--ink); font: 16px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+button { font: inherit; cursor: pointer; }
+.wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
+h1, h2, h3 { font-family: var(--serif); line-height: 1.15; margin: 0; letter-spacing: -.01em; }
+
+/* En-tête */
+.top { position: sticky; top: 0; z-index: 20; background: var(--navy); color: #fff; border-bottom: 3px solid var(--gold); }
+.top .wrap { display: flex; align-items: center; gap: 20px; min-height: 64px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-family: var(--serif); font-weight: 600; font-size: 1.15rem; margin-right: auto; padding: 8px 0; }
+.brand .mark { width: 36px; height: 36px; border-radius: 10px; background: var(--gold); display: grid; place-items: center; color: var(--navy); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 6px 0; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { color: #cfdbe8; text-decoration: none; padding: 8px 14px; border-radius: 999px; font-weight: 500; font-size: .95rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; }
+.tab:hover { background: rgba(255,255,255,.08); color: #fff; }
+.tab[aria-current="page"] { background: #fff; color: var(--navy); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 0 rgba(217,58,58,.7); animation: pulse 1.6s infinite; display: none; }
+.is-live .dot { display: inline-block; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(217,58,58,0); } 100% { box-shadow: 0 0 0 0 rgba(217,58,58,0); } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } html { scroll-behavior: auto; } }
+
+/* Accueil */
+.hero { background: radial-gradient(1200px 400px at 85% -10%, rgba(212,162,76,.25), transparent 60%), linear-gradient(160deg, var(--navy), var(--blue)); color: #fff; padding: clamp(40px, 8vw, 88px) 0; }
+.hero h1 { font-size: clamp(2rem, 5.5vw, 3.6rem); max-width: 16ch; }
+.hero p { max-width: 52ch; color: #d3dfeb; font-size: 1.1rem; margin: 16px 0 0; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; padding: 12px 22px; font-weight: 600; text-decoration: none; background: var(--gold); color: #1b1405; transition: transform .15s, filter .15s; }
+.btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.btn.ghost { background: transparent; color: inherit; border: 1.5px solid currentColor; }
+.btn.red { background: var(--red); color: #fff; }
+.btn.small { padding: 7px 14px; font-size: .9rem; }
+.btn.danger { background: transparent; color: var(--red); border: 1.5px solid var(--red); }
+.hero .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+.livebar { background: var(--red); color: #fff; }
+.livebar .wrap { display: flex; align-items: center; gap: 12px; padding: 10px 0; flex-wrap: wrap; }
+.livebar a { margin-left: auto; font-weight: 600; }
+
+section.block { padding: 40px 0 8px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.sec-head h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); }
+.sec-head a { color: var(--blue); font-weight: 600; text-decoration: none; }
+@media (prefers-color-scheme: dark) { .sec-head a { color: var(--gold); } }
+.page-title { padding: 36px 0 8px; }
+.page-title h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+.page-title p { color: var(--muted); margin: 8px 0 0; max-width: 60ch; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: -34px; position: relative; }
+.tile { background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; text-decoration: none; display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); }
+.tile b { font-family: var(--serif); font-size: 1.25rem; }
+.tile span { color: var(--muted); font-size: .92rem; }
+.tile:hover { border-color: var(--gold); }
+
+/* Grilles de médias */
+.grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); padding-bottom: 40px; }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+.card .thumb { position: relative; aspect-ratio: 16/9; background: linear-gradient(135deg, var(--blue), var(--navy)); border: 0; padding: 0; display: block; width: 100%; color: #fff; overflow: hidden; }
+.card .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.card .thumb .play { position: absolute; inset: 0; display: grid; place-items: center; }
+.card .thumb .play i { width: 54px; height: 54px; border-radius: 50%; background: rgba(10,37,64,.72); display: grid; place-items: center; transition: transform .15s; }
+.card .thumb:hover .play i { transform: scale(1.1); background: var(--gold); color: var(--navy); }
+.card .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 4px; }
+.card h3 { font-size: 1.05rem; font-family: var(--sans); font-weight: 600; letter-spacing: 0; }
+.meta { color: var(--muted); font-size: .85rem; }
+.card p { margin: 4px 0 0; color: var(--muted); font-size: .92rem; }
+.badge { display: inline-block; background: var(--blue-soft); color: var(--blue); font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+@media (prefers-color-scheme: dark) { .badge { color: var(--gold); } }
+.photos { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.photo { border: 0; padding: 0; border-radius: 12px; overflow: hidden; aspect-ratio: 1; background: var(--blue-soft); position: relative; }
+.photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+.photo:hover img { transform: scale(1.05); }
+.photo span { position: absolute; left: 0; right: 0; bottom: 0; padding: 24px 10px 8px; color: #fff; font-size: .85rem; text-align: left; background: linear-gradient(transparent, rgba(0,0,0,.65)); opacity: 0; transition: opacity .2s; }
+.photo:hover span, .photo:focus-visible span { opacity: 1; }
+.audio-list { display: grid; gap: 12px; padding-bottom: 40px; }
+.audio { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 8px; box-shadow: var(--shadow); }
+.audio audio { width: 100%; }
+.empty { text-align: center; color: var(--muted); padding: 56px 16px; border: 2px dashed var(--line); border-radius: var(--radius); margin-bottom: 40px; }
+
+/* Direct */
+.player { position: relative; aspect-ratio: 16/9; background: #000; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.player video { width: 100%; height: 100%; background: #000; }
+.offline { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 8px; color: #fff; padding: 24px; background: radial-gradient(800px 300px at 50% 0, rgba(212,162,76,.22), transparent 70%), linear-gradient(160deg, var(--navy), var(--blue)); }
+.offline h2 { font-size: clamp(1.3rem, 3vw, 2rem); }
+.offline p { color: #cfdbe8; margin: 0 auto; max-width: 44ch; }
+.live-info { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 16px 0 6px; }
+.pill { display: inline-flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 700; letter-spacing: .06em; padding: 4px 12px; border-radius: 999px; background: var(--red); color: #fff; }
+.pill.off { background: var(--line); color: var(--muted); }
+
+/* Fenêtre (vidéo / photo) */
+dialog { border: 0; padding: 0; background: transparent; max-width: min(1000px, 96vw); width: 100%; color: #fff; }
+dialog::backdrop { background: rgba(5,12,20,.86); }
+dialog .box { position: relative; }
+dialog video, dialog .big { width: 100%; max-height: 82vh; background: #000; border-radius: 12px; object-fit: contain; }
+dialog .cap { padding: 12px 4px; }
+dialog .x { position: absolute; top: -42px; right: 0; background: none; border: 0; color: #fff; font-size: 1.8rem; line-height: 1; padding: 4px 10px; }
+
+footer { margin-top: 48px; padding: 28px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* Administration */
+.admin-wrap { padding: 28px 0 40px; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 18px; }
+.panel h2 { font-size: 1.3rem; margin-bottom: 12px; }
+label { display: block; font-weight: 600; font-size: .9rem; margin: 12px 0 4px; }
+input[type=text], input[type=password], textarea, select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--cream); color: var(--ink); font: inherit; }
+textarea { min-height: 76px; resize: vertical; }
+.copyrow { display: flex; gap: 8px; }
+.copyrow input { font-family: ui-monospace, Menlo, Consolas, monospace; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.drop { border: 2px dashed var(--line); border-radius: var(--radius); padding: 26px; text-align: center; color: var(--muted); background: var(--cream); transition: border-color .15s, background .15s; }
+.drop.over { border-color: var(--gold); background: var(--blue-soft); }
+.progress { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: 8px; }
+.progress i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .2s; }
+.upl { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+.upl.err { color: var(--red); }
+.list-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.list-row img, .list-row .ph { width: 72px; height: 48px; object-fit: cover; border-radius: 8px; background: var(--blue-soft); flex: none; }
+.list-row .t { flex: 1; min-width: 0; }
+.list-row .t b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.steps { padding-left: 20px; color: var(--muted); }
+.steps li { margin: 6px 0; }
+.note { background: var(--blue-soft); border-radius: 10px; padding: 10px 14px; font-size: .92rem; }
+.warn { background: #fff4d6; color: #5a4000; border-radius: 10px; padding: 10px 14px; font-size: .92rem; }
+.login { max-width: 400px; margin: 64px auto; }
+
+</style>
+</head>
+<body>
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="#/">
+      <span class="mark"><svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true"><path d="M14 4h4v7h8v4h-8v13h-4V15H6v-4h8z" fill="currentColor"/></svg></span>
+      EEPT Tokoin Centre
+    </a>
+    <nav class="tabs" aria-label="Navigation principale">
+      <a class="tab" href="#/" data-route="">Accueil</a>
+      <a class="tab" href="#/direct" data-route="direct"><span class="dot" aria-hidden="true"></span>Direct</a>
+      <a class="tab" href="#/videos" data-route="videos">Vidéos</a>
+      <a class="tab" href="#/photos" data-route="photos">Photos</a>
+      <a class="tab" href="#/audios" data-route="audios">Audios</a>
+    </nav>
+  </div>
+</header>
+<div id="livebar"></div>
+<main id="view" tabindex="-1"></main>
+<footer>
+  <div class="wrap">
+    <span>© <span id="year"></span> EEPT Tokoin Centre</span>
+    
+  </div>
+</footer>
+<dialog id="dlg"><div class="box"><button class="x" aria-label="Fermer">×</button><div id="dlg-body"></div></div></dialog>
+
+<script>
+
+/* Version GitHub Pages : les contenus viennent du fichier contenu.json */
+(() => {
+  const realFetch = window.fetch.bind(window);
+  const yt = (id) => `https://img.youtube.com/vi/${encodeURIComponent(id)}/hqdefault.jpg`;
+  const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  async function load() {
+    let c = {};
+    try { c = await (await realFetch('contenu.json', { cache: 'no-store' })).json(); } catch (e) { console.warn('contenu.json introuvable', e); }
+    const when = (x) => Date.parse(x.date) || 0;
+    const list = (a) => (Array.isArray(a) ? a : []);
+    const videos = list(c.videos).map((v, i) => ({ id: 'v' + i, type: 'videos', title: v.titre || 'Vidéo', description: v.description || '', createdAt: when(v), source: v.direct ? 'direct' : '', youtube: v.youtube || '', url: v.url || '', thumb: v.miniature || (v.youtube ? yt(v.youtube) : null) }));
+    const photos = list(c.photos).map((p, i) => ({ id: 'p' + i, type: 'photos', title: p.titre || 'Photo', description: p.description || '', createdAt: when(p), url: p.url, thumb: p.miniature || p.url }));
+    const audios = list(c.audios).map((a, i) => ({ id: 'a' + i, type: 'audios', title: a.titre || 'Audio', description: a.description || '', createdAt: when(a), url: a.url }));
+    const d = c.direct || {};
+    return { items: [...videos, ...photos, ...audios].sort((a, b) => b.createdAt - a.createdAt),
+      live: { live: !!d.actif, title: d.titre || 'Culte en direct', description: d.description || '', playlist: d.hls || '', youtube: d.youtube || '' } };
+  }
+  window.fetch = async (u, o) => {
+    const s = String(u);
+    if (!s.startsWith('/api/')) return realFetch(u, o);
+    const { items, live } = await load();
+    if (s.startsWith('/api/live')) return json(live);
+    const t = new URL(s, 'http://x').searchParams.get('type');
+    return json(items.filter((i) => !t || i.type === t));
+  };
+})();
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const view = $('#view');
+const dlg = $('#dlg');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtDate = (t) => new Date(t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const fmtSize = (b) => (b > 1e9 ? (b / 1e9).toFixed(1) + ' Go' : b > 1e6 ? Math.round(b / 1e6) + ' Mo' : Math.max(1, Math.round(b / 1e3)) + ' Ko');
+const ICON_PLAY = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+$('#year').textContent = new Date().getFullYear();
+
+const getJson = (u) => fetch(u, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : Promise.reject(r)));
+let live = { live: false, title: '', description: '' };
+let hls = null, liveTimer = null;
+
+/* ───────── État du direct (consulté régulièrement) ───────── */
+async function refreshLive() {
+  try { live = await getJson('/api/live'); } catch { /* hors ligne */ }
+  document.body.classList.toggle('is-live', !!live.live);
+  document.querySelector('[data-route="direct"]').classList.toggle('is-live', !!live.live);
+  $('#livebar').innerHTML = live.live && route() !== 'direct'
+    ? `<div class="livebar"><div class="wrap"><span class="pill" style="background:#fff;color:var(--red)">● EN DIRECT</span><strong>${esc(live.title)}</strong><a href="#/direct">Rejoindre le direct →</a></div></div>` : '';
+  return live;
+}
+setInterval(async () => { const was = live.live; await refreshLive(); if (route() === 'direct' && was !== live.live) render(); }, 6000);
+
+/* ───────── Routage ───────── */
+const route = () => (location.hash.replace(/^#\/?/, '').split('/')[0] || '');
+const PAGES = { '': home, direct, videos: () => mediaPage('videos'), photos: () => mediaPage('photos'), audios: () => mediaPage('audios') };
+
+async function render() {
+  const r = route() in PAGES ? route() : '';
+  document.querySelectorAll('.tab').forEach((a) => {
+    if (a.dataset.route === r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  stopPlayer();
+  await refreshLive();
+  await PAGES[r]();
+}
+window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
+
+/* ───────── Pages ───────── */
+async function home() {
+  const [videos, photos, audios] = await Promise.all(['videos', 'photos', 'audios'].map((t) => getJson('/api/media?type=' + t).catch(() => [])));
+  document.title = 'EEPT Tokoin Centre';
+  view.innerHTML = `
+    <section class="hero"><div class="wrap">
+      <h1>Bienvenue à EEPT Tokoin Centre</h1>
+      <p>Suivez nos cultes et nos séances de prière en direct, retrouvez les messages en vidéo et en audio, et revivez les moments en photos.</p>
+      <div class="actions">
+        <a class="btn ${live.live ? 'red' : ''}" href="#/direct">${live.live ? '● Regarder le direct' : 'Le direct'}</a>
+        <a class="btn ghost" href="#/videos">Voir les vidéos</a>
+      </div>
+    </div></section>
+    <div class="wrap">
+      <div class="tiles">
+        <a class="tile" href="#/direct"><b>Direct</b><span>${live.live ? 'En cours maintenant' : 'Cultes et prières en direct'}</span></a>
+        <a class="tile" href="#/videos"><b>Vidéos</b><span>${videos.length} vidéo${videos.length > 1 ? 's' : ''}</span></a>
+        <a class="tile" href="#/photos"><b>Photos</b><span>${photos.length} photo${photos.length > 1 ? 's' : ''}</span></a>
+        <a class="tile" href="#/audios"><b>Audios</b><span>${audios.length} enregistrement${audios.length > 1 ? 's' : ''}</span></a>
+      </div>
+      ${videos.length ? `<section class="block"><div class="sec-head"><h2>Dernières vidéos</h2><a href="#/videos">Tout voir</a></div><div class="grid">${videos.slice(0, 3).map(videoCard).join('')}</div></section>` : ''}
+      ${audios.length ? `<section class="block"><div class="sec-head"><h2>Derniers audios</h2><a href="#/audios">Tout voir</a></div><div class="audio-list">${audios.slice(0, 2).map(audioCard).join('')}</div></section>` : ''}
+    </div>`;
+  bindMedia(videos, photos);
+}
+
+async function direct() {
+  document.title = 'Direct — EEPT Tokoin Centre';
+  const replays = (await getJson('/api/media?type=videos').catch(() => [])).filter((v) => v.source === 'direct').slice(0, 6);
+  view.innerHTML = `
+    <div class="wrap">
+      <div class="page-title"><h1>Direct</h1></div>
+      <div class="player" id="player"></div>
+      <div class="live-info"><span class="pill ${live.live ? '' : 'off'}">${live.live ? '● EN DIRECT' : 'HORS LIGNE'}</span><h2 style="font-size:1.4rem">${esc(live.title || 'Culte en direct')}</h2></div>
+      ${live.description ? `<p class="meta" style="font-size:1rem;white-space:pre-line">${esc(live.description)}</p>` : ''}
+      ${replays.length ? `<section class="block"><div class="sec-head"><h2>Rediffusions récentes</h2><a href="#/videos">Toutes les vidéos</a></div><div class="grid">${replays.map(videoCard).join('')}</div></section>` : ''}
+    </div>`;
+  bindMedia(replays, []);
+  const box = $('#player');
+  if (!live.live) {
+    box.innerHTML = `<div class="offline"><h2>Aucun direct en ce moment</h2><p>${esc(live.description) || 'Revenez à l’heure du culte ou de la séance de prière : le direct démarre ici automatiquement.'}</p></div>`;
+    return;
+  }
+  if (live.youtube) { box.innerHTML = `<iframe style="width:100%;height:100%;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(live.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`; return; }
+  box.innerHTML = '<video id="vid" controls autoplay muted playsinline></video>';
+  startPlayer($('#vid'), live.playlist);
+}
+
+async function mediaPage(type) {
+  const items = await getJson('/api/media?type=' + type).catch(() => []);
+  const T = { videos: ['Vidéos', 'Prédications, enseignements et rediffusions de nos cultes.'], photos: ['Photos', 'Les moments forts de la vie de l’église.'], audios: ['Audios', 'Écoutez les messages et les temps de louange où que vous soyez.'] }[type];
+  document.title = `${T[0]} — EEPT Tokoin Centre`;
+  const body = !items.length ? `<div class="empty">Rien à afficher pour le moment.</div>`
+    : type === 'videos' ? `<div class="grid">${items.map(videoCard).join('')}</div>`
+    : type === 'photos' ? `<div class="grid photos">${items.map((p, i) => `<button class="photo" data-photo="${i}" aria-label="${esc(p.title)}"><img loading="lazy" src="${p.thumb || p.url}" alt="${esc(p.title)}"><span>${esc(p.title)}</span></button>`).join('')}</div>`
+    : `<div class="audio-list">${items.map(audioCard).join('')}</div>`;
+  view.innerHTML = `<div class="wrap"><div class="page-title"><h1>${T[0]}</h1><p>${T[1]}</p></div><section class="block" style="padding-top:20px">${body}</section></div>`;
+  bindMedia(type === 'videos' ? items : [], type === 'photos' ? items : []);
+}
+
+/* ───────── Composants ───────── */
+function videoCard(v) {
+  return `<article class="card"><button class="thumb" data-video="${v.id}" aria-label="Lire ${esc(v.title)}">${v.thumb ? `<img loading="lazy" src="${v.thumb}" alt="">` : ''}<span class="play"><i>${ICON_PLAY}</i></span></button>
+    <div class="body"><h3>${esc(v.title)}${v.source === 'direct' ? '<span class="badge">Rediffusion</span>' : ''}</h3><span class="meta">${fmtDate(v.createdAt)}</span>${v.description ? `<p>${esc(v.description)}</p>` : ''}</div></article>`;
+}
+function audioCard(a) {
+  return `<article class="audio"><div><h3 style="font-family:var(--sans);font-size:1.05rem">${esc(a.title)}</h3><span class="meta">${fmtDate(a.createdAt)}</span>${a.description ? `<p class="meta" style="margin:4px 0 0">${esc(a.description)}</p>` : ''}</div><audio controls preload="none" src="${a.url}"></audio></article>`;
+}
+function bindMedia(videos, photos) {
+  view.querySelectorAll('[data-video]').forEach((b) => b.addEventListener('click', () => {
+    const v = videos.find((x) => x.id === b.dataset.video); if (!v) return;
+    openDialog(`${v.youtube ? `<iframe class="big" style="aspect-ratio:16/9;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : `<video controls autoplay playsinline src="${v.url}"></video>`}<div class="cap"><strong>${esc(v.title)}</strong></div>`);
+  }));
+  view.querySelectorAll('[data-photo]').forEach((b) => b.addEventListener('click', () => {
+    const p = photos[+b.dataset.photo];
+    openDialog(`<img class="big" src="${p.url}" alt="${esc(p.title)}"><div class="cap"><strong>${esc(p.title)}</strong>${p.description ? `<div class="meta">${esc(p.description)}</div>` : ''}</div>`);
+  }));
+}
+function openDialog(html) { $('#dlg-body').innerHTML = html; dlg.showModal(); }
+dlg.addEventListener('close', () => { $('#dlg-body').innerHTML = ''; });
+dlg.addEventListener('click', (e) => { if (e.target === dlg || e.target.classList.contains('x')) dlg.close(); });
+
+/* ───────── Lecteur HLS ───────── */
+function loadHlsLib() {
+  return new Promise((res, rej) => {
+    if (window.Hls) return res();
+    // 1) copie locale facultative (public/hls.min.js), 2) sinon CDN
+    const add = (src, fail) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = fail; document.head.appendChild(s); };
+    add('/hls.min.js', () => add('https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js', rej));
+  });
+}
+async function startPlayer(video, src) {
+  if (video.canPlayType('application/vnd.apple.mpegurl')) { video.src = src; return; } // Safari / iPhone
+  try { await loadHlsLib(); } catch { return; }
+  if (!window.Hls.isSupported()) return;
+  hls = new window.Hls({ liveSyncDurationCount: 3, enableWorker: true });
+  hls.loadSource(src); hls.attachMedia(video);
+  hls.on(window.Hls.Events.ERROR, (_e, d) => {
+    if (!d.fatal) return;
+    if (d.type === window.Hls.ErrorTypes.NETWORK_ERROR) setTimeout(() => hls && hls.startLoad(), 2000);
+    else if (d.type === window.Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+  });
+}
+function stopPlayer() { if (hls) { hls.destroy(); hls = null; } }
+
+render();
+
+</script>
+</body>
+</html>
