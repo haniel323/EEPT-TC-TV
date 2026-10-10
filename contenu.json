@@ -8,13 +8,7 @@
     "hls": ""
   },
   "videos": [],
-  "photos": [
-    {
-      "titre": "PXL_20260222_112939105.PORTRAIT.ORIGINAL",
-      "date": "2026-10-10",
-      "url": "photos/1791650806129-pxl-20260222-112939105-portrait-original.jpg"
-    }
-  ],
+  "photos": [],
   "audios": [],
   "google": {
     "apiKey": "",
