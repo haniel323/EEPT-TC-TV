@@ -476,6 +476,8 @@ a.ncard:hover .next { color: #f5c518; }
 .nnote { display: flex; gap: 14px; align-items: flex-start; margin-top: 30px; padding: 20px 24px; background: #181b23; border-left: 4px solid #f5c518; border-radius: 12px; color: #c3cbd9; }
 .nnote svg { flex: none; margin-top: 2px; color: #f5c518; }
 .nnote p { margin: 0; }
+.hero-tv .bg.temple { background-position: 62% 28%; transform: none; filter: none; }
+@media (max-width: 900px) { .hero-tv .bg.temple { background-position: 58% 20%; } }
 </style>
 </head>
 <body>
@@ -764,7 +766,7 @@ async function home() {
   const feat = videos[0];
   const dim = videos.filter((v) => v.category === 'dimanche'), pri = videos.filter((v) => v.category === 'priere'), oth = videos.filter((v) => !v.category);
   const top = videos.slice(0, 5).map((v, i) => `<button class="rcard rtop" data-video="${v.id}"><span class="n">${i + 1}</span><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="cap">${esc(v.title)}</span></span></button>`);
-  const bg = feat && feat.thumb ? `<div class="bg" style="background-image:url('${esc(feat.thumb)}')"></div>` : '<div class="bg logo" style="background-image:url(logo.png)"></div>';
+  const bg = '<div class="bg temple" style="background-image:url(temple.jpg)"></div>';
   const heroTitle = live.live ? live.title : feat ? feat.title : 'EEPT Tokoin Centre';
   const heroText = live.live ? (live.description || 'Rejoignez-nous en direct.') : feat ? (feat.description || 'Le dernier message de notre église.') : 'Cultes, prédications et temps de prière de l’EEPT Tokoin Centre, en direct et en replay.';
   view.innerHTML = `
