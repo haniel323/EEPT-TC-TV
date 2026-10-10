@@ -452,7 +452,7 @@ function audioCard(a) {
 function bindMedia(videos, photos) {
   view.querySelectorAll('[data-video]').forEach((b) => b.addEventListener('click', () => {
     const v = videos.find((x) => x.id === b.dataset.video); if (!v) return;
-    openDialog(`${v.youtube ? `<iframe class="big" style="aspect-ratio:16/9;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : `<video controls autoplay playsinline src="${v.url}"></video>`}<div class="cap"><strong>${esc(v.title)}</strong>${v.description ? `<div style="color:#dbe5ee;margin-top:4px;white-space:pre-line">${esc(v.description)}</div>` : ''}</div>${v.youtube ? '<div id="dlg-cmt"></div>' : ''}`);
+    openDialog(`${v.youtube ? `<iframe class="big" style="aspect-ratio:16/9;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : `<video controls autoplay playsinline src="${esc(v.url)}"></video>`}<div class="cap"><strong>${esc(v.title)}</strong>${v.description ? `<div style="color:#dbe5ee;margin-top:4px;white-space:pre-line">${esc(v.description)}</div>` : ''}</div>${v.youtube ? '<div id="dlg-cmt"></div>' : ''}`);
     if (v.youtube) mountComments($('#dlg-cmt'), v.youtube);
   }));
   view.querySelectorAll('[data-photo]').forEach((b) => b.addEventListener('click', () => {
