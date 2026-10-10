@@ -13,5 +13,27 @@
   "google": {
     "apiKey": "",
     "clientId": ""
+  },
+  "reseaux": {
+    "eglise": {
+      "facebook": "",
+      "youtube": "",
+      "instagram": "",
+      "tiktok": ""
+    },
+    "pasteur": {
+      "nom": "",
+      "facebook": "",
+      "youtube": "",
+      "instagram": "",
+      "tiktok": ""
+    }
+  },
+  "contact": {
+    "telephone": "",
+    "whatsapp": "",
+    "email": "",
+    "adresse": "",
+    "horaires": ""
   }
 }

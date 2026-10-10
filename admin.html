@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Administration — EEPT Tokoin Centre</title>
+<title>Administration — Commission Mass Media TC</title>
 <meta name="theme-color" content="#0a2540">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d4a24c'/%3E%3Cpath d='M14 6h4v7h7v4h-7v9h-4v-9H7v-4h7z' fill='%230a2540'/%3E%3C/svg%3E">
 <style>
@@ -58,12 +58,13 @@ textarea { min-height:70px; resize:vertical; }
 </head>
 <body>
 <header class="top"><div class="wrap">
-  <a class="brand" href="./">EEPT Tokoin Centre · Administration</a>
+  <a class="brand" href="./">Commission Mass Media TC · Administration</a>
   <nav id="nav" hidden aria-label="Administration">
     <a class="tab" href="#direct" data-tab="direct">Direct</a>
     <a class="tab" href="#videos" data-tab="videos">Vidéos</a>
     <a class="tab" href="#photos" data-tab="photos">Photos</a>
     <a class="tab" href="#audios" data-tab="audios">Audios</a>
+    <a class="tab" href="#infos" data-tab="infos">Réseaux et contact</a>
     <a class="tab" href="./">Voir le site</a>
     <button class="tab" id="logout" type="button">Déconnexion</button>
   </nav>
@@ -111,6 +112,8 @@ async function loadData() {
   let d = {}; try { d = JSON.parse(unb64(j.content)); } catch {}
   d.google = { apiKey: '', clientId: '', ...(d.google || {}) };
   d.direct = { actif: false, titre: 'Culte en direct', description: '', youtube: '', hls: '', ...(d.direct || {}) };
+  d.reseaux = { pasteur: {}, eglise: {}, ...(d.reseaux || {}) }; d.reseaux.pasteur = d.reseaux.pasteur || {}; d.reseaux.eglise = d.reseaux.eglise || {};
+  d.contact = d.contact || {};
   for (const k of ['videos', 'photos', 'audios']) if (!Array.isArray(d[k])) d[k] = [];
   data = d;
 }
@@ -191,9 +194,9 @@ async function start() {
   if (!data) { try { await loadData(); } catch (e) { store.set('eept_token', ''); cfg.token = ''; return loginView(); } }
   $('#nav').hidden = false;
   tab = location.hash.slice(1) || 'direct';
-  if (!['direct', 'videos', 'photos', 'audios'].includes(tab)) tab = 'direct';
+  if (!['direct', 'videos', 'photos', 'audios', 'infos'].includes(tab)) tab = 'direct';
   document.querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
-  ({ direct: directView, videos: videosView, photos: photosView, audios: audiosView })[tab]();
+  ({ direct: directView, videos: videosView, photos: photosView, audios: audiosView, infos: infosView })[tab]();
 }
 window.addEventListener('hashchange', () => { if (data) start(); });
 $('#logout').onclick = () => { store.set('eept_token', ''); cfg.token = ''; data = null; loginView(); };
@@ -208,6 +211,8 @@ function directView() {
     <label for="desc">Description / horaires</label><textarea id="desc" maxlength="1000" placeholder="Ex : Culte chaque dimanche à 9h.">${esc(d.description)}</textarea>
     <label for="yt">Lien ou identifiant du live YouTube</label><input id="yt" type="text" value="${esc(d.youtube)}" placeholder="https://www.youtube.com/watch?v=…">
     <p class="meta" id="ytok"></p>
+    <label for="hls">Adresse du flux HLS (facultatif, pour un direct sans YouTube)</label><input id="hls" type="text" value="${esc(d.hls)}" placeholder="https://…/manifest/video.m3u8">
+    <p class="meta">À remplir si vous utilisez un service comme Cloudflare Stream : collez ici l'adresse de lecture (.m3u8). Elle est utilisée à la place de YouTube.</p>
     <p style="margin-top:14px"><button class="btn" id="save">Enregistrer</button> <span id="st"></span></p></div>
     <div class="panel"><h2>Commentaires YouTube</h2>
     <p class="meta">Affiche les commentaires sous vos vidéos et le chat pendant le direct. La clé API permet de <b>lire</b> les commentaires. L'identifiant client permet aux personnes connectées avec Google d'<b>écrire</b> un commentaire ou une réponse. Sans ces deux champs, un lien vers YouTube s'affiche à la place.</p>
@@ -228,8 +233,8 @@ function directView() {
       <p class="meta" id="ctlmsg" style="margin:10px 0 0"></p>`;
     $('#tog').onclick = async () => {
       const turningOn = !data.direct.actif;
-      if (turningOn && !ytId($('#yt').value) && !data.direct.hls) return status($('#ctlmsg'), 'Ajoutez d’abord le lien du live YouTube dans les réglages ci-dessous, puis enregistrez.', false);
-      if (turningOn) data.direct.youtube = ytId($('#yt').value) || data.direct.youtube;
+      if (turningOn && !ytId($('#yt').value) && !$('#hls').value.trim() && !data.direct.hls) return status($('#ctlmsg'), 'Ajoutez d’abord le lien du live YouTube dans les réglages ci-dessous, puis enregistrez.', false);
+      if (turningOn) { data.direct.youtube = ytId($('#yt').value) || data.direct.youtube; data.direct.hls = $('#hls').value.trim(); }
       data.direct.actif = turningOn; $('#tog').disabled = true; status($('#ctlmsg'), 'Enregistrement…');
       try { await saveData(turningOn ? 'Direct démarré' : 'Direct arrêté'); drawCtl(); status($('#ctlmsg'), turningOn ? 'Direct démarré ✓ Il apparaît sur le site dans 1 à 2 minutes.' : 'Direct arrêté ✓ Il disparaît du site dans 1 à 2 minutes.', true); }
       catch (e) { data.direct.actif = !turningOn; drawCtl(); status($('#ctlmsg'), e.message, false); }
@@ -241,7 +246,7 @@ function directView() {
   $('#save').onclick = async () => {
     const yt = $('#yt').value.trim(), id = ytId(yt);
     if (yt && !id) return status($('#st'), 'Lien YouTube non reconnu.', false);
-    Object.assign(data.direct, { titre: $('#titre').value.trim() || 'Culte en direct', description: $('#desc').value.trim(), youtube: id });
+    Object.assign(data.direct, { titre: $('#titre').value.trim() || 'Culte en direct', description: $('#desc').value.trim(), youtube: id, hls: $('#hls').value.trim() });
     $('#save').disabled = true; status($('#st'), 'Enregistrement…');
     try { await saveData(data.direct.actif ? 'Direct activé' : 'Direct mis à jour'); status($('#st'), SAVED, true); } catch (e) { status($('#st'), e.message, false); }
     $('#save').disabled = false;
@@ -251,6 +256,31 @@ function directView() {
     $('#saveg').disabled = true; status($('#stg'), 'Enregistrement…');
     try { await saveData('Réglages des commentaires YouTube'); status($('#stg'), SAVED, true); } catch (e) { status($('#stg'), e.message, false); }
     $('#saveg').disabled = false;
+  };
+}
+
+/* Réseaux et contact */
+function infosView() {
+  const r = data.reseaux, c = data.contact;
+  const NETS = [['facebook', 'Facebook'], ['youtube', 'YouTube'], ['instagram', 'Instagram'], ['tiktok', 'TikTok']];
+  const net = (who) => NETS.map(([k, l]) => `<label for="${who}-${k}">${l}</label><input id="${who}-${k}" type="text" value="${esc(r[who][k] || '')}" placeholder="https://…" autocomplete="off">`).join('');
+  app.innerHTML = `<div class="panel"><h2>Réseaux sociaux de l'église</h2>${net('eglise')}</div>
+    <div class="panel"><h2>Réseaux sociaux du pasteur</h2><label for="pasteur-nom">Nom du pasteur</label><input id="pasteur-nom" type="text" value="${esc(r.pasteur.nom || '')}" placeholder="Ex : Jean Dupont">${net('pasteur')}</div>
+    <div class="panel"><h2>Contacts</h2>
+      <p class="meta">Laissez vide ce que vous ne voulez pas afficher.</p>
+      <label for="c-tel">Téléphone</label><input id="c-tel" type="text" value="${esc(c.telephone || '')}" placeholder="+228 …">
+      <label for="c-wa">WhatsApp (avec l'indicatif du pays)</label><input id="c-wa" type="text" value="${esc(c.whatsapp || '')}" placeholder="+228 …">
+      <label for="c-mail">E-mail</label><input id="c-mail" type="text" value="${esc(c.email || '')}" placeholder="contact@…">
+      <label for="c-adr">Adresse</label><input id="c-adr" type="text" value="${esc(c.adresse || '')}" placeholder="Tokoin Centre, Lomé, Togo">
+      <label for="c-hor">Horaires des cultes</label><textarea id="c-hor" maxlength="500" placeholder="Dimanche 8h–11h · Prière mercredi 18h">${esc(c.horaires || '')}</textarea>
+      <p style="margin-top:14px"><button class="btn" id="savei">Enregistrer</button> <span id="sti"></span></p></div>`;
+  $('#savei').onclick = async () => {
+    for (const who of ['eglise', 'pasteur']) for (const [k] of NETS) data.reseaux[who][k] = $(`#${who}-${k}`).value.trim();
+    data.reseaux.pasteur.nom = $('#pasteur-nom').value.trim();
+    data.contact = { telephone: $('#c-tel').value.trim(), whatsapp: $('#c-wa').value.trim(), email: $('#c-mail').value.trim(), adresse: $('#c-adr').value.trim(), horaires: $('#c-hor').value.trim() };
+    $('#savei').disabled = true; status($('#sti'), 'Enregistrement…');
+    try { await saveData('Réseaux sociaux et contacts'); status($('#sti'), SAVED, true); } catch (e) { status($('#sti'), e.message, false); }
+    $('#savei').disabled = false;
   };
 }
 
