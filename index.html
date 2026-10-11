@@ -668,6 +668,30 @@ dialog { max-width: min(1240px, 96vw); }
 .pv-nav.prev { left: 10px; } .pv-nav.next { right: 10px; }
 .pv-count { display: inline-block; margin-bottom: 8px; padding: 3px 12px; border-radius: 99px; background: #1257cf; color: #fff; font-weight: 800; font-size: .85rem; }
 @media (max-width: 900px) { .pv { grid-template-columns: 1fr; } .pv-media img { max-height: 60vh; } .albums { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 12px; } }
+/* Page Direct façon BNC TV */
+.live-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 20px; align-items: start; }
+.live-layout .player { border-radius: 18px; border: 1px solid #232b3a; }
+.live-side { background: #121722; border: 1px solid #232b3a; border-radius: 18px; padding: 22px; }
+.live-side h2 { margin: 12px 0 0; font-size: clamp(1.2rem, 2.2vw, 1.7rem); line-height: 1.15; color: #fff; text-transform: uppercase; }
+.live-side p { color: #c3cbd9; white-space: pre-line; margin: 12px 0 0; }
+.yt-crop { position: absolute; inset: 0; overflow: hidden; background: #000; }
+.yt-crop iframe { position: absolute; left: 0; top: 50%; width: 100%; height: 140%; transform: translateY(-50%); border: 0; pointer-events: none; }
+.yt-shield { position: absolute; inset: 0; z-index: 2; }
+.yt-ctl { position: absolute; z-index: 3; right: 12px; bottom: 12px; display: flex; gap: 8px; }
+.yt-ctl button { min-height: 0; height: 38px; padding: 0 14px; border-radius: 99px; border: 1px solid rgba(255,255,255,.25); background: rgba(8,11,17,.7); color: #fff; font-weight: 700; font-size: .85rem; backdrop-filter: blur(6px); }
+.yt-ctl button.muted { background: #1257cf; border-color: #1257cf; }
+.ltabs { display: flex; gap: 6px; margin: 30px 0 0; border-bottom: 1px solid #232b3a; }
+.ltabs button { min-height: 0; padding: 14px 18px; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; color: #9aa6ba; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; font-size: .9rem; }
+.ltabs button.on { color: #f5c518; border-bottom-color: #f5c518; }
+.lpane { margin-top: 18px; }
+.lrow { display: flex; align-items: center; gap: 16px; padding: 14px; border-radius: 14px; background: #1257cf; color: #fff; }
+.lrow img { border-radius: 8px; background: #fff; flex: none; object-fit: cover; }
+.lrow b { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; font-size: 1.05rem; text-transform: uppercase; }
+.lrow .rd { width: 8px; height: 8px; border-radius: 50%; background: #e03939; flex: none; }
+.lpill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 99px; background: rgba(255,255,255,.18); font-weight: 700; font-size: .85rem; white-space: nowrap; }
+.lpill i { width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+.ltz { text-align: center; color: #7e8aa0; font-size: .85rem; margin: 22px 0 6px; }
+@media (max-width: 900px) { .live-layout { grid-template-columns: 1fr; } .live-side { padding: 16px; } .lrow { flex-wrap: wrap; } .lrow img { width: 48px; height: 48px; } }
 </style>
 </head>
 <body>
@@ -1016,22 +1040,41 @@ async function home() {
 
 async function direct() {
   document.title = 'Direct — EEPT Tokoin Centre';
-  const replays = (await getJson('/api/media?type=videos').catch(() => [])).filter((v) => v.source === 'direct').slice(0, 6);
+  const { programme: prog } = await loadSite();
   view.innerHTML = `
     <div class="wrap">
       <div class="page-title"><h1>Direct</h1></div>
-      <div class="livegrid" id="livegrid"><div class="player" id="player"></div></div>
-      <div class="live-info"><span class="pill ${live.live ? '' : 'off'}">${live.live ? '● EN DIRECT' : 'HORS LIGNE'}</span><h2 style="font-size:1.4rem">${esc(live.title || 'Culte en direct')}</h2></div>
-      ${live.description ? `<p class="meta" style="font-size:1rem;white-space:pre-line">${esc(live.description)}</p>` : ''}
-      ${replays.length ? `<section class="block"><div class="sec-head"><h2>Rediffusions récentes</h2><a href="#/videos">Toutes les vidéos</a></div><div class="grid">${replays.map(videoCard).join('')}</div></section>` : ''}
+      <div class="live-layout">
+        <div class="player" id="player"></div>
+        <aside class="live-side"><span class="pill ${live.live ? '' : 'off'}">${live.live ? '● EN DIRECT' : 'HORS LIGNE'}</span><h2>${esc(live.title || 'Culte en direct')}</h2>${live.description ? `<p>${esc(live.description)}</p>` : ''}</aside>
+      </div>
+      <div class="ltabs" role="tablist"><button type="button" class="on" role="tab" data-lt="now">En direct</button><button type="button" role="tab" data-lt="next">À suivre</button></div>
+      <div class="lpane" id="lt-now"><div class="lrow"><img src="logo.png" alt="" width="62" height="62"><b><i class="rd"></i>${esc(live.title || 'Culte en direct')}</b><span class="lpill">${live.live ? '<i></i> En lecture' : 'Hors ligne'}</span></div></div>
+      <div class="lpane" id="lt-next" hidden>${prog.length ? schedHtml(prog) : '<p class="meta" style="margin:14px 0">Le programme sera bientôt publié.</p>'}</div>
+      <p class="ltz">Les horaires sont indiqués en heure locale (UTC+0).</p>
     </div>`;
-  bindMedia(replays, []);
+  view.querySelectorAll('[data-lt]').forEach((t) => t.addEventListener('click', () => {
+    view.querySelectorAll('[data-lt]').forEach((x) => x.classList.toggle('on', x === t));
+    $('#lt-now').hidden = t.dataset.lt !== 'now'; $('#lt-next').hidden = t.dataset.lt !== 'next';
+  }));
   const box = $('#player');
   if (!live.live) {
     box.innerHTML = `<div class="offline"><h2>Aucun direct en ce moment</h2><p>${esc(live.description) || 'Revenez à l’heure du culte ou de la séance de prière : le direct démarre ici automatiquement.'}</p></div>`;
     return;
   }
-  if (live.youtube) { box.innerHTML = `<iframe style="width:100%;height:100%;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(live.youtube)}?autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`; return; }
+  if (live.youtube) {
+    // Lecteur « propre » : l'iframe est plus haute que la vidéo, les bandes noires (où YouTube place son titre, le lien et le partage) sont rognées,
+    // et un voile transparent empêche l'affichage des boutons YouTube. Le son et le plein écran sont gérés par nos propres boutons.
+    const id = encodeURIComponent(live.youtube);
+    box.innerHTML = `<div class="yt-crop"><iframe title="Direct" src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1&cc_load_policy=0" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" tabindex="-1"></iframe></div><div class="yt-shield"></div>
+      <div class="yt-ctl"><button type="button" id="yt-snd" class="muted">🔇 Activer le son</button><button type="button" id="yt-fs" aria-label="Plein écran">⛶</button></div>`;
+    const fr = box.querySelector('iframe'); let muted = true;
+    const cmd = (f) => { try { fr.contentWindow.postMessage(JSON.stringify({ event: 'command', func: f, args: [] }), '*'); } catch {} };
+    fr.addEventListener('load', () => { fr.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*'); cmd('playVideo'); });
+    $('#yt-snd').addEventListener('click', (e) => { muted = !muted; cmd(muted ? 'mute' : 'unMute'); cmd('playVideo'); e.currentTarget.textContent = muted ? '🔇 Activer le son' : '🔊 Son activé'; e.currentTarget.classList.toggle('muted', muted); });
+    $('#yt-fs').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else (box.requestFullscreen || box.webkitRequestFullscreen || (() => {})).call(box); });
+    return;
+  }
   box.innerHTML = '<video id="vid" controls autoplay muted playsinline></video>';
   startPlayer($('#vid'), live.playlist);
 }
