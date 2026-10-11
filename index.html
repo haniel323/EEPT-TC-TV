@@ -642,6 +642,32 @@ dialog { max-width: min(1240px, 96vw); }
   .une-nav .arr { display: none; } .une-nav .arr[data-u="-1"] { left: 8px; } .une-nav .arr[data-u="1"] { right: 8px; }
   .une-nav .dots { left: 16px; right: auto; bottom: 16px; }
 }
+/* Albums photos (playlists) */
+.albums { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 22px 16px; }
+.album { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: #fff; }
+.album .stack { position: relative; display: block; aspect-ratio: 4 / 3; margin: 0 6px 6px; }
+.album .stack::before, .album .stack::after { content: ""; position: absolute; left: -6px; right: -6px; top: -6px; bottom: 6px; border-radius: 14px; background: #1b2231; border: 1px solid #232b3a; z-index: 0; transform: scale(.96) translateY(-4px); }
+.album .stack::after { transform: scale(.92) translateY(-9px); background: #151b27; }
+.album .cover { position: absolute; inset: 0; border-radius: 14px; overflow: hidden; background: #121722; z-index: 1; border: 1px solid #232b3a; transition: transform .25s; }
+.album:hover .cover { transform: translateY(-3px); border-color: #f5c518; }
+.album .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.album .cnt { position: absolute; z-index: 2; right: 8px; bottom: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; background: rgba(8,11,17,.8); font-size: .8rem; font-weight: 700; backdrop-filter: blur(4px); }
+.album b { font-size: 1.02rem; line-height: 1.2; padding: 0 4px; }
+.album small { color: #8c97ab; padding: 0 4px; }
+.back { display: inline-block; color: #f5c518; text-decoration: none; font-weight: 700; margin-bottom: 8px; }
+.alb-act { margin-top: 14px; }
+.pmore { text-align: center; margin: 22px 0 4px; }
+.later { display: none !important; }
+.searching .later { display: revert !important; }
+.searching .pmore { display: none; }
+.photo > span { font-variant-numeric: tabular-nums; }
+.pv { display: grid; grid-template-columns: 1fr 280px; gap: 18px; align-items: start; }
+.pv-media { position: relative; background: #05070b; border-radius: 12px; overflow: hidden; display: grid; place-items: center; min-height: 240px; }
+.pv-media img { max-width: 100%; max-height: 78vh; width: auto; height: auto; object-fit: contain; }
+.pv-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: rgba(8,11,17,.6); color: #fff; font-size: 1.7rem; line-height: 1; min-height: 0; backdrop-filter: blur(6px); }
+.pv-nav.prev { left: 10px; } .pv-nav.next { right: 10px; }
+.pv-count { display: inline-block; margin-bottom: 8px; padding: 3px 12px; border-radius: 99px; background: #1257cf; color: #fff; font-weight: 800; font-size: .85rem; }
+@media (max-width: 900px) { .pv { grid-template-columns: 1fr; } .pv-media img { max-height: 60vh; } .albums { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 12px; } }
 </style>
 </head>
 <body>
@@ -714,7 +740,7 @@ dialog { max-width: min(1240px, 96vw); }
     const when = (x) => Date.parse(x.date) || 0;
     const list = (a) => (Array.isArray(a) ? a : []);
     const videos = list(c.videos).map((v, i) => ({ id: 'v' + i, type: 'videos', title: v.titre || 'Vidéo', description: v.description || '', createdAt: when(v), source: v.direct ? 'direct' : '', category: v.categorie || '', youtube: v.youtube || '', url: v.url || '', thumb: v.miniature || (v.youtube ? yt(v.youtube) : null) }));
-    const photos = list(c.photos).map((p, i) => ({ id: 'p' + i, type: 'photos', title: p.titre || 'Photo', description: p.description || '', createdAt: when(p), url: p.url, thumb: p.miniature || p.url }));
+    const photos = list(c.photos).map((p, i) => ({ id: 'p' + i, type: 'photos', title: p.titre || 'Photo', description: p.description || '', createdAt: when(p), url: p.url, thumb: p.miniature || p.url, album: p.album || '', ordre: i }));
     const audios = list(c.audios).map((a, i) => ({ id: 'a' + i, type: 'audios', title: a.titre || 'Audio', description: a.description || '', createdAt: when(a), category: a.categorie || '', url: a.url }));
     window.GCFG = c.google || {};
     const d = c.direct || {};
@@ -757,7 +783,7 @@ setInterval(async () => { const was = live.live; await refreshLive(); if (route(
 
 /* ───────── Routage ───────── */
 const route = () => (location.hash.replace(/^#\/?/, '').split('/')[0] || '');
-const PAGES = { '': home, direct, videos: () => mediaPage('videos'), photos: () => mediaPage('photos'), audios: () => mediaPage('audios'), reseaux, contact, don, infos, verset: versetPage };
+const PAGES = { '': home, direct, videos: () => mediaPage('videos'), photos: photosPage, audios: () => mediaPage('audios'), reseaux, contact, don, infos, verset: versetPage };
 
 async function render() {
   const r = route() in PAGES ? route() : '';
@@ -977,7 +1003,7 @@ async function home() {
       ${rail('r-oth', 'Autres vidéos', oth.map(rc), '#/videos')}
       ${rail('r-sh', 'Les Shorts', shorts.map((v) => `<button class="rcard short" data-video="${v.id}"><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="play"><i>${ICON_PLAY}</i></span><span class="cap">${esc(v.title)}</span></span></button>`), '#/videos')}
       ${audios.length ? `<section class="rail-sec"><div class="rail-head"><h2>Prédications et audios</h2><div class="ctl"><a href="#/audios">Voir tout</a></div></div><div class="rail arail">${audios.slice(0, 8).map(audioCard).join('')}</div></section>` : ''}
-      ${photos.length ? `<section class="rail-sec"><div class="rail-head"><h2>En photos</h2><div class="ctl"><a href="#/photos">Voir tout</a></div></div><div class="mosaic">${photos.slice(0, 6).map((p, i) => `<button class="photo" data-photo="${i}" aria-label="${esc(p.title)}"><img loading="lazy" src="${esc(p.thumb || p.url)}" alt=""><span>${esc(p.title)}</span></button>`).join('')}</div></section>` : ''}
+      ${photos.length ? `<section class="rail-sec"><div class="rail-head"><h2>Albums photos</h2><div class="ctl"><a href="#/photos">Voir tout</a></div></div><div class="albums">${buildAlbums(photos).slice(0, 6).map(albumCard).join('')}</div></section>` : ''}
       ${!videos.length && !audios.length && !photos.length ? '<p class="empty" style="margin-top:40px">Les premiers contenus arrivent bientôt.</p>' : ''}
       ${prog.length ? `<section class="rail-sec"><div class="rail-head"><h2>Programme de la semaine</h2></div>${schedHtml(prog)}</section>` : ''}
       ${hasDon ? '<section class="follow don"><div><h2>Soutenir la web-télé</h2><p>Votre don nous aide à continuer à diffuser les cultes et les messages.</p></div><div class="bt"><a class="btn" href="#/don">Faire un don</a></div></section>' : ''}
@@ -985,7 +1011,7 @@ async function home() {
     </div>`;
   view.querySelectorAll('[data-rail]').forEach((b) => b.addEventListener('click', () => { const r = document.getElementById(b.dataset.rail); r.scrollBy({ left: +b.dataset.dir * r.clientWidth * .85, behavior: 'smooth' }); }));
   initUne();
-  bindMedia(allVideos, photos); bindShare(ver);
+  bindMedia(allVideos, []); bindShare(ver);
 }
 
 async function direct() {
@@ -1010,6 +1036,66 @@ async function direct() {
   startPlayer($('#vid'), live.playlist);
 }
 
+/* ───────── Photos : albums façon playlist ───────── */
+const aslug = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'autres';
+function buildAlbums(items) {
+  const m = new Map();
+  items.forEach((p) => { const name = p.album || 'Autres photos'; const k = aslug(name); if (!m.has(k)) m.set(k, { key: k, name, photos: [], date: 0 }); const a = m.get(k); a.photos.push(p); a.date = Math.max(a.date, p.createdAt || 0); });
+  const arr = [...m.values()]; arr.forEach((a) => a.photos.sort((x, y) => x.ordre - y.ordre));
+  return arr.sort((a, b) => b.date - a.date || a.name.localeCompare(b.name));
+}
+const albumCard = (a) => `<a class="album" href="#/photos/${a.key}"><span class="stack"><span class="cover"><img loading="lazy" src="${esc(a.photos[0].thumb || a.photos[0].url)}" alt=""></span><span class="cnt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>${a.photos.length}</span></span><b>${esc(a.name)}</b><small>${fmtDate(a.date)} · ${a.photos.length} photo${a.photos.length > 1 ? 's' : ''}</small></a>`;
+async function photosPage() {
+  const items = await getJson('/api/media?type=photos').catch(() => []);
+  const albums = buildAlbums(items);
+  const key = decodeURIComponent((location.hash.replace(/^#\/?/, '').split('/')[1] || ''));
+  const al = key && albums.find((a) => a.key === key);
+  if (!al) {
+    document.title = 'Photos — EEPT Tokoin Centre';
+    view.innerHTML = `<div class="wrap"><div class="page-title"><h1>Photos</h1><p>Chaque album regroupe les photos d’un événement, dans l’ordre.</p></div><section class="block" style="padding-top:20px">${albums.length ? `<div class="albums">${albums.map(albumCard).join('')}</div>` : '<div class="empty">Rien à afficher pour le moment.</div>'}</section></div>`;
+    return;
+  }
+  document.title = `${al.name} — EEPT Tokoin Centre`;
+  view.innerHTML = `<div class="wrap"><div class="page-title"><a class="back" href="#/photos">‹ Tous les albums</a><h1>${esc(al.name)}</h1><p>${al.photos.length} photo${al.photos.length > 1 ? 's' : ''} · ${fmtDate(al.date)}</p><div class="alb-act"><button class="btn small" type="button" id="alb-play">▶ Tout voir</button></div></div><section class="block" style="padding-top:12px"><div class="grid photos" id="pgrid"></div><div id="pmore" class="pmore"></div></section></div>`;
+  const grid = $('#pgrid'), more = $('#pmore'); let shown = 0; const STEP = 60;
+  const add = () => {
+    const part = al.photos.slice(shown, shown + STEP);
+    grid.insertAdjacentHTML('beforeend', part.map((p, j) => `<button class="photo" data-i="${shown + j}" aria-label="Photo ${shown + j + 1}"><img loading="lazy" decoding="async" src="${esc(p.thumb || p.url)}" alt=""><span>${shown + j + 1}</span></button>`).join(''));
+    shown += part.length;
+    more.innerHTML = shown < al.photos.length ? `<button class="btn ghost" type="button" id="pmore-b">Afficher plus (${al.photos.length - shown})</button>` : '';
+    const b = $('#pmore-b'); if (b) b.onclick = add;
+  };
+  add();
+  grid.addEventListener('click', (e) => { const b = e.target.closest('[data-i]'); if (b) openPhotoViewer(al, +b.dataset.i); });
+  $('#alb-play').onclick = () => openPhotoViewer(al, 0);
+}
+let PV = null;
+function openPhotoViewer(al, i) {
+  PV = { al, i };
+  const draw = () => {
+    const { al, i } = PV, p = al.photos[i], n = al.photos.length;
+    $('#dlg-body').innerHTML = `<div class="pv"><div class="pv-media"><img class="big" src="${esc(p.url)}" alt="${esc(p.title)}">${n > 1 ? '<button class="pv-nav prev" type="button" data-pv="-1" aria-label="Photo précédente">‹</button><button class="pv-nav next" type="button" data-pv="1" aria-label="Photo suivante">›</button>' : ''}</div><aside class="dg-cap"><span class="pv-count">${i + 1} / ${n}</span><h3>${esc(al.name)}</h3>${p.description ? `<p>${esc(p.description)}</p>` : ''}<span class="meta">${fmtDate(p.createdAt)}</span></aside></div>`;
+    [al.photos[i + 1], al.photos[i - 1]].forEach((q) => { if (q) { const im = new Image(); im.src = q.url; } });
+  };
+  PV.go = (k) => { const n = PV.al.photos.length; if (k < 0 || k >= n) return; PV.i = k; draw(); };
+  draw(); if (!dlg.open) dlg.showModal();
+}
+document.addEventListener('keydown', (e) => { if (!PV || !dlg.open) return; if (e.key === 'ArrowRight') PV.go(PV.i + 1); else if (e.key === 'ArrowLeft') PV.go(PV.i - 1); });
+dlg.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pv]'); if (b && PV) PV.go(PV.i + +b.dataset.pv); });
+dlg.addEventListener('close', () => { PV = null; });
+(() => { let x0 = null; dlg.addEventListener('touchstart', (e) => { x0 = PV ? e.touches[0].clientX : null; }, { passive: true }); dlg.addEventListener('touchend', (e) => { if (x0 === null || !PV) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) PV.go(PV.i + (dx < 0 ? 1 : -1)); x0 = null; }, { passive: true }); })();
+
+/* Beaucoup de contenus : afficher par lots */
+function paginate(root) {
+  root.querySelectorAll('.grid:not(.photos), .audio-list').forEach((g) => {
+    const kids = [...g.children]; const STEP = 24; if (kids.length <= STEP) return;
+    let shown = STEP; kids.forEach((c, i) => { if (i >= STEP) c.classList.add('later'); });
+    const btn = document.createElement('div'); btn.className = 'pmore'; btn.innerHTML = '<button class="btn ghost" type="button"></button>';
+    const b = btn.firstChild, upd = () => { const left = kids.length - shown; b.textContent = `Afficher plus (${left})`; btn.hidden = left <= 0; };
+    b.onclick = () => { kids.slice(shown, shown + STEP).forEach((c) => c.classList.remove('later')); shown += STEP; upd(); };
+    g.after(btn); upd();
+  });
+}
 async function mediaPage(type) {
   const items = await getJson('/api/media?type=' + type).catch(() => []);
   const T = { videos: ['Vidéos', 'Prédications, enseignements et rediffusions de nos cultes.'], photos: ['Photos', 'Les moments forts de la vie de l’église.'], audios: ['Audios', 'Écoutez les messages et les temps de louange où que vous soyez.'] }[type];
@@ -1020,9 +1106,10 @@ async function mediaPage(type) {
     : '';
   const sb = type === 'videos' || type === 'audios' ? '<div class="searchbar"><input id="q" type="search" placeholder="Rechercher un titre…" aria-label="Rechercher"></div>' : '';
   view.innerHTML = `<div class="wrap"><div class="page-title"><h1>${T[0]}</h1><p>${T[1]}</p></div><section class="block" style="padding-top:20px">${sb}${body}</section></div>`;
+  paginate(view);
   const q = $('#q');
   if (q) q.addEventListener('input', () => {
-    const t = q.value.trim().toLowerCase();
+    const t = q.value.trim().toLowerCase(); view.classList.toggle('searching', !!t);
     view.querySelectorAll('.card, .audio').forEach((c) => { c.style.display = !t || c.textContent.toLowerCase().includes(t) ? '' : 'none'; });
     view.querySelectorAll('.part').forEach((sec) => { const cs = sec.querySelectorAll('.card, .audio'); sec.style.display = !t || !cs.length || [...cs].some((c) => c.style.display !== 'none') ? '' : 'none'; });
   });
