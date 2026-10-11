@@ -692,6 +692,22 @@ dialog { max-width: min(1240px, 96vw); }
 .lpill i { width: 7px; height: 7px; border-radius: 50%; background: #fff; }
 .ltz { text-align: center; color: #7e8aa0; font-size: .85rem; margin: 22px 0 6px; }
 @media (max-width: 900px) { .live-layout { grid-template-columns: 1fr; } .live-side { padding: 16px; } .lrow { flex-wrap: wrap; } .lrow img { width: 48px; height: 48px; } }
+/* Catalogue d'émissions et programmation */
+.ems { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+.em { position: relative; display: block; aspect-ratio: 2 / 3; border-radius: 14px; overflow: hidden; background: #121722 linear-gradient(160deg, #1257cf33, #0b0e14); border: 1px solid #232b3a; text-decoration: none; color: #fff; transition: transform .25s, border-color .25s; }
+.em:hover { transform: translateY(-4px); border-color: #f5c518; }
+.em img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.em::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(8,11,17,.95) 0%, rgba(8,11,17,.35) 45%, transparent 70%); }
+.em-n { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: 30px; font-weight: 800; font-size: .95rem; text-transform: uppercase; line-height: 1.15; }
+.em-c { position: absolute; z-index: 2; left: 12px; bottom: 10px; font-size: .75rem; color: #aab4c6; }
+.upc { display: grid; gap: 12px; }
+.up { display: flex; gap: 16px; align-items: center; padding: 12px; border-radius: 14px; background: #121722; border: 1px solid #232b3a; }
+.up > img, .up .noimg { width: 168px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; flex: none; background: #0b0e14; display: grid; place-items: center; }
+.up .noimg img { width: 48px; height: 48px; border-radius: 50%; background: #fff; }
+.up .when { color: #f5c518; font-weight: 800; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+.up h3 { margin: 4px 0 0; font-size: 1.05rem; color: #fff; }
+.up p { margin: 6px 0 0; color: #aab4c6; font-size: .92rem; white-space: pre-line; }
+@media (max-width: 600px) { .ems { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .up { flex-direction: column; align-items: stretch; } .up > img, .up .noimg { width: 100%; } }
 </style>
 </head>
 <body>
@@ -763,10 +779,10 @@ dialog { max-width: min(1240px, 96vw); }
     try { c = await (await realFetch('contenu.json', { cache: 'no-store' })).json(); } catch (e) { console.warn('contenu.json introuvable', e); }
     const when = (x) => Date.parse(x.date) || 0;
     const list = (a) => (Array.isArray(a) ? a : []);
-    const videos = list(c.videos).map((v, i) => ({ id: 'v' + i, type: 'videos', title: v.titre || 'Vidéo', description: v.description || '', createdAt: when(v), source: v.direct ? 'direct' : '', category: v.categorie || '', youtube: v.youtube || '', url: v.url || '', thumb: v.miniature || (v.youtube ? yt(v.youtube) : null) }));
+    const videos = list(c.videos).map((v, i) => ({ id: 'v' + i, type: 'videos', title: v.titre || 'Vidéo', description: v.description || '', createdAt: when(v), source: v.direct ? 'direct' : '', category: v.categorie || '', emission: v.emission || '', youtube: v.youtube || '', url: v.url || '', thumb: v.miniature || (v.youtube ? yt(v.youtube) : null) }));
     const photos = list(c.photos).map((p, i) => ({ id: 'p' + i, type: 'photos', title: p.titre || 'Photo', description: p.description || '', createdAt: when(p), url: p.url, thumb: p.miniature || p.url, album: p.album || '', ordre: i }));
     const audios = list(c.audios).map((a, i) => ({ id: 'a' + i, type: 'audios', title: a.titre || 'Audio', description: a.description || '', createdAt: when(a), category: a.categorie || '', url: a.url }));
-    window.GCFG = c.google || {};
+    window.GCFG = c.google || {}; window.EMISSIONS = list(c.emissions);
     const d = c.direct || {};
     return { items: [...videos, ...photos, ...audios].sort((a, b) => b.createdAt - a.createdAt),
       live: { live: !!d.actif, title: d.titre || 'Culte en direct', description: d.description || '', playlist: d.hls || '', youtube: d.youtube || '' } };
@@ -807,7 +823,7 @@ setInterval(async () => { const was = live.live; await refreshLive(); if (route(
 
 /* ───────── Routage ───────── */
 const route = () => (location.hash.replace(/^#\/?/, '').split('/')[0] || '');
-const PAGES = { '': home, direct, videos: () => mediaPage('videos'), photos: photosPage, audios: () => mediaPage('audios'), reseaux, contact, don, infos, verset: versetPage };
+const PAGES = { '': home, direct, videos: videosPage, photos: photosPage, audios: () => mediaPage('audios'), reseaux, contact, don, infos, verset: versetPage };
 
 async function render() {
   const r = route() in PAGES ? route() : '';
@@ -844,7 +860,7 @@ function verseOfDay(custom) {
 }
 async function loadSite() {
   if (SITE.done) return SITE;
-  try { const c = await (await fetch('contenu.json', { cache: 'no-store' })).json(); SITE.reseaux = c.reseaux || {}; SITE.contact = c.contact || {}; SITE.don = c.don || {}; SITE.infos = Array.isArray(c.infos) ? c.infos : []; SITE.autres = Array.isArray(c.autres) ? c.autres : []; SITE.verset = c.verset || {}; SITE.programme = Array.isArray(c.programme) ? c.programme : []; } catch { SITE.reseaux = {}; SITE.contact = {}; SITE.don = {}; SITE.infos = []; SITE.autres = []; SITE.verset = {}; SITE.programme = []; }
+  try { const c = await (await fetch('contenu.json', { cache: 'no-store' })).json(); SITE.reseaux = c.reseaux || {}; SITE.contact = c.contact || {}; SITE.don = c.don || {}; SITE.infos = Array.isArray(c.infos) ? c.infos : []; SITE.autres = Array.isArray(c.autres) ? c.autres : []; SITE.verset = c.verset || {}; SITE.programme = Array.isArray(c.programme) ? c.programme : []; SITE.programmation = Array.isArray(c.programmation) ? c.programmation : []; } catch { SITE.reseaux = {}; SITE.contact = {}; SITE.don = {}; SITE.infos = []; SITE.autres = []; SITE.verset = {}; SITE.programme = []; SITE.programmation = []; }
   SITE.verset = verseOfDay(SITE.verset); SITE.done = true; return SITE;
 }
 const safeUrl = (u) => { u = String(u || '').trim(); if (!u) return ''; if (/^(https?:)\/\//i.test(u)) return u; if (/^[a-z]+:/i.test(u)) return ''; return 'https://' + u.replace(/^\/+/, ''); };
@@ -1040,7 +1056,10 @@ async function home() {
 
 async function direct() {
   document.title = 'Direct — EEPT Tokoin Centre';
-  const { programme: prog } = await loadSite();
+  const { programme: prog, programmation } = await loadSite();
+  const nowD = new Date(Date.now() - 36e5 * 3), td = nowD.toISOString().slice(0, 10);
+  const upc = programmation.filter((x) => String(x.date) >= td).sort((a, b) => (a.date + (a.heure || '')).localeCompare(b.date + (b.heure || '')));
+  const upcCard = (x) => `<article class="up">${x.image ? `<img loading="lazy" src="${esc(x.image)}" alt="">` : '<span class="noimg"><img src="logo.png" alt="" width="48" height="48"></span>'}<div><span class="when">${esc(fmtD(x.date))}${x.heure ? ' · ' + esc(x.heure) : ''}</span><h3>${esc(x.titre)}</h3>${x.description ? `<p>${esc(x.description)}</p>` : ''}</div></article>`;
   view.innerHTML = `
     <div class="wrap">
       <div class="page-title"><h1>Direct</h1></div>
@@ -1050,7 +1069,7 @@ async function direct() {
       </div>
       <div class="ltabs" role="tablist"><button type="button" class="on" role="tab" data-lt="now">En direct</button><button type="button" role="tab" data-lt="next">À suivre</button></div>
       <div class="lpane" id="lt-now"><div class="lrow"><img src="logo.png" alt="" width="62" height="62"><b><i class="rd"></i>${esc(live.title || 'Culte en direct')}</b><span class="lpill">${live.live ? '<i></i> En lecture' : 'Hors ligne'}</span></div></div>
-      <div class="lpane" id="lt-next" hidden>${prog.length ? schedHtml(prog) : '<p class="meta" style="margin:14px 0">Le programme sera bientôt publié.</p>'}</div>
+      <div class="lpane" id="lt-next" hidden>${upc.length ? `<div class="upc">${upc.map(upcCard).join('')}</div>` : prog.length ? schedHtml(prog) : '<p class="meta" style="margin:14px 0">Le programme sera bientôt publié.</p>'}</div>
       <p class="ltz">Les horaires sont indiqués en heure locale (UTC+0).</p>
     </div>`;
   view.querySelectorAll('[data-lt]').forEach((t) => t.addEventListener('click', () => {
@@ -1139,6 +1158,34 @@ function paginate(root) {
     g.after(btn); upd();
   });
 }
+/* ───────── Vidéos : catalogue d'émissions ───────── */
+const EM_DEFAULT = { dimanche: 'Cultes du dimanche', priere: 'Temps de prière', shorts: 'Shorts' };
+function emissionOf(v) { return v.emission || EM_DEFAULT[v.category] || 'Autres vidéos'; }
+function buildEmissions(items) {
+  const m = new Map(), cfg = window.EMISSIONS || [];
+  items.forEach((v) => { const name = emissionOf(v), k = aslug(name); if (!m.has(k)) { const c = cfg.find((x) => aslug(x.nom) === k) || {}; m.set(k, { key: k, name, poster: c.image || '', desc: c.description || '', videos: [], date: 0 }); } const e = m.get(k); e.videos.push(v); e.date = Math.max(e.date, v.createdAt || 0); });
+  const arr = [...m.values()]; arr.forEach((e) => e.videos.sort((a, b) => b.createdAt - a.createdAt || a.title.localeCompare(b.title)));
+  return arr.sort((a, b) => b.date - a.date);
+}
+const emCard = (e) => { const img = e.poster || (e.videos.find((v) => v.thumb) || {}).thumb || ''; return `<a class="em" href="#/videos/${e.key}" data-name="${esc(e.name.toLowerCase())}">${img ? `<img loading="lazy" src="${esc(img)}" alt="">` : ''}<span class="em-n">${esc(e.name)}</span><span class="em-c">${e.videos.length} vidéo${e.videos.length > 1 ? 's' : ''}</span></a>`; };
+async function videosPage() {
+  const items = await getJson('/api/media?type=videos').catch(() => []);
+  const ems = buildEmissions(items);
+  const key = decodeURIComponent((location.hash.replace(/^#\/?/, '').split('/')[1] || ''));
+  const em = key && ems.find((e) => e.key === key);
+  if (!em) {
+    document.title = 'Vidéos — EEPT Tokoin Centre';
+    view.innerHTML = `<div class="wrap"><div class="page-title"><h1>Vidéos</h1><p>Toutes nos émissions, à parcourir librement.</p><p class="meta">${ems.length} émission${ems.length > 1 ? 's' : ''}</p></div><section class="block" style="padding-top:12px"><div class="searchbar"><input id="q" type="search" placeholder="Rechercher une émission…" aria-label="Rechercher"></div>${ems.length ? `<div class="ems" id="ems">${ems.map(emCard).join('')}</div><div class="empty" id="noem" hidden>Aucune émission trouvée.</div>` : '<div class="empty">Rien à afficher pour le moment.</div>'}</section></div>`;
+    const q = $('#q'); if (q) q.addEventListener('input', () => { const t = q.value.trim().toLowerCase(); let n = 0; view.querySelectorAll('.em').forEach((c) => { const ok = !t || c.dataset.name.includes(t); c.style.display = ok ? '' : 'none'; if (ok) n++; }); $('#noem').hidden = n > 0; });
+    return;
+  }
+  document.title = `${em.name} — EEPT Tokoin Centre`;
+  view.innerHTML = `<div class="wrap"><div class="page-title"><a class="back" href="#/videos">‹ Toutes les émissions</a><h1>${esc(em.name)}</h1>${em.desc ? `<p>${esc(em.desc)}</p>` : ''}<p class="meta">${em.videos.length} vidéo${em.videos.length > 1 ? 's' : ''}</p></div><section class="block" style="padding-top:12px"><div class="searchbar"><input id="q" type="search" placeholder="Rechercher dans cette émission…" aria-label="Rechercher"></div><div class="grid">${em.videos.map(videoCard).join('')}</div></section></div>`;
+  paginate(view);
+  const q = $('#q'); q.addEventListener('input', () => { const t = q.value.trim().toLowerCase(); view.classList.toggle('searching', !!t); view.querySelectorAll('.card').forEach((c) => { c.style.display = !t || c.textContent.toLowerCase().includes(t) ? '' : 'none'; }); });
+  bindMedia(em.videos, []);
+}
+
 async function mediaPage(type) {
   const items = await getJson('/api/media?type=' + type).catch(() => []);
   const T = { videos: ['Vidéos', 'Prédications, enseignements et rediffusions de nos cultes.'], photos: ['Photos', 'Les moments forts de la vie de l’église.'], audios: ['Audios', 'Écoutez les messages et les temps de louange où que vous soyez.'] }[type];

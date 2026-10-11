@@ -118,7 +118,7 @@ async function loadData() {
   d.direct = { actif: false, titre: 'Culte en direct', description: '', youtube: '', hls: '', ...(d.direct || {}) };
   d.reseaux = { pasteur: {}, eglise: {}, ...(d.reseaux || {}) }; d.reseaux.pasteur = d.reseaux.pasteur || {}; d.reseaux.eglise = d.reseaux.eglise || {};
   d.contact = d.contact || {}; d.verset = { texte: '', reference: '', date: '', ...(d.verset || {}) };
-  for (const k of ['infos', 'autres', 'programme']) if (!Array.isArray(d[k])) d[k] = []; d.don = { texte: '', lien: '', details: '', ...(d.don || {}) };
+  for (const k of ['infos', 'autres', 'programme', 'programmation', 'emissions']) if (!Array.isArray(d[k])) d[k] = []; d.don = { texte: '', lien: '', details: '', ...(d.don || {}) };
   for (const k of ['videos', 'photos', 'audios']) if (!Array.isArray(d[k])) d[k] = [];
   data = d;
 }
@@ -230,6 +230,68 @@ window.addEventListener('hashchange', () => { if (data) start(); });
 $('#logout').onclick = () => { store.set('eept_token', ''); cfg.token = ''; data = null; loginView(); };
 
 /* Direct */
+/* Émissions (catalogue vidéo) */
+const EM_BUILTIN = ['Cultes du dimanche', 'Temps de prière', 'Shorts', 'Autres vidéos'];
+function emissionNames() { return [...new Set([...data.videos.map((v) => v.emission).filter(Boolean), ...data.emissions.map((e) => e.nom)])]; }
+function emissionsPanel() {
+  const names = emissionNames();
+  const rows = !names.length ? '<p class="meta">Les émissions apparaissent ici dès que vous en nommez une en ajoutant une vidéo.</p>' : names.map((n, k) => {
+    const c = data.emissions.find((e) => e.nom === n) || {}, cnt = data.videos.filter((v) => v.emission === n).length;
+    return `<div class="item" style="display:block"><div class="row" style="gap:12px;align-items:center">${c.image ? `<img src="${esc(c.image)}" alt="" style="width:48px;height:72px;object-fit:cover;border-radius:8px">` : '<span style="width:48px;height:72px;border-radius:8px;background:#e8edf5;display:inline-block"></span>'}<span class="t" style="flex:1"><b>${esc(n)}</b><span class="meta"> ${cnt} vidéo${cnt > 1 ? 's' : ''}</span></span></div>
+      <label>Affiche (image verticale, facultative)</label><input type="file" accept="image/*" data-emimg="${k}">
+      <label>Description (facultative)</label><input type="text" data-emdesc="${k}" value="${esc(c.description || '')}" maxlength="300">
+      <p style="margin-top:8px"><button class="btn small" data-emsave="${k}">Enregistrer cette émission</button> <span class="meta" data-emst="${k}"></span></p></div>`;
+  }).join('');
+  return `<div class="panel"><h2>Émissions</h2><p class="meta">Chaque émission s'affiche sur le site comme une affiche dans le catalogue. Ajoutez une affiche et une description pour la personnaliser (sinon, la miniature de la dernière vidéo est utilisée).</p>${rows}</div>`;
+}
+function bindEmissions() {
+  const names = emissionNames();
+  document.querySelectorAll('[data-emsave]').forEach((b) => (b.onclick = async () => {
+    const k = +b.dataset.emsave, n = names[k], st = document.querySelector(`[data-emst="${k}"]`);
+    const file = document.querySelector(`[data-emimg="${k}"]`).files[0], desc = document.querySelector(`[data-emdesc="${k}"]`).value.trim();
+    let c = data.emissions.find((e) => e.nom === n); const created = !c; if (!c) { c = { nom: n }; data.emissions.push(c); }
+    const before = JSON.stringify(c); b.disabled = true; status(st, 'Enregistrement…');
+    try {
+      if (file) { const blob = await resizeImage(file, 900); const p = `emissions/${slug(n)}-${Date.now().toString(36)}.jpg`; await putFile(p, await fileB64(blob), 'Affiche : ' + n); c.image = p; }
+      if (desc) c.description = desc; else delete c.description;
+      await saveData('Émission : ' + n); status(st, SAVED, true); if (file) start();
+    } catch (e) { if (created) data.emissions.pop(); else Object.assign(c, JSON.parse(before)); status(st, e.message, false); }
+    b.disabled = false;
+  }));
+}
+
+/* Programmation des directs (onglet « À suivre » de la page Direct) */
+function programmationPanel() {
+  const td = today();
+  const arr = data.programmation.map((x, i) => ({ x, i })).sort((a, b) => (a.x.date + (a.x.heure || '')).localeCompare(b.x.date + (b.x.heure || '')));
+  const rows = !arr.length ? '<p class="meta">Aucun programme pour le moment.</p>' : arr.map(({ x, i }) => `<div class="item"><div class="row" style="gap:12px;align-items:center;flex:1">${x.image ? `<img src="${esc(x.image)}" alt="" style="width:96px;height:54px;object-fit:cover;border-radius:8px">` : ''}<span class="t"><b>${esc(x.titre)}</b><span class="meta">${esc(x.date)}${x.heure ? ' · ' + esc(x.heure) : ''}${x.date < td ? ' · passé' : ''}</span></span></div><button class="btn small danger" data-delprog="${i}">Supprimer</button></div>`).join('');
+  return `<div class="panel"><h2>Programmation des directs</h2>
+    <p class="meta">Ces programmes s'affichent sur la page Direct, dans l'onglet « À suivre », tant que leur date n'est pas passée.</p>
+    <div class="grid2"><div><label for="pgd">Date</label><input id="pgd" type="date" value="${td}"></div><div><label for="pgh">Heure</label><input id="pgh" type="time" value="09:00"></div></div>
+    <label for="pgt">Titre</label><input id="pgt" type="text" maxlength="150" placeholder="Ex : Culte de louange">
+    <label for="pgx">Description (facultative)</label><textarea id="pgx" maxlength="500"></textarea>
+    <label for="pgi">Image (facultative)</label><input id="pgi" type="file" accept="image/*">
+    <p style="margin-top:14px"><button class="btn" id="pgadd">Ajouter à la programmation</button> <span id="pgst"></span></p>
+    <h3 style="margin:22px 0 8px;font-size:1rem">Programmes enregistrés</h3>${rows}</div>`;
+}
+function bindProgrammation() {
+  $('#pgadd').onclick = async () => {
+    const titre = $('#pgt').value.trim(), date = $('#pgd').value; if (!titre || !date) return status($('#pgst'), 'Indiquez au moins une date et un titre.', false);
+    const f = $('#pgi').files[0]; $('#pgadd').disabled = true; status($('#pgst'), 'Enregistrement…');
+    const entry = { date, heure: $('#pgh').value, titre, description: $('#pgx').value.trim() }; let up = '', pushed = false;
+    try {
+      if (f) { const blob = await resizeImage(f, 1200); up = `programmation/${slug(titre)}-${Date.now().toString(36)}.jpg`; await putFile(up, await fileB64(blob), 'Image du programme : ' + titre); entry.image = up; }
+      data.programmation.push(clean(entry)); pushed = true; await saveData('Programme : ' + titre); start();
+    } catch (e) { if (pushed) data.programmation.pop(); status($('#pgst'), e.message, false); $('#pgadd').disabled = false; }
+  };
+  document.querySelectorAll('[data-delprog]').forEach((b) => (b.onclick = async () => {
+    const i = +b.dataset.delprog, it = data.programmation[i]; if (!confirm(`Supprimer « ${it.titre} » ?`)) return;
+    data.programmation.splice(i, 1); b.disabled = true;
+    try { await saveData('Supprimer le programme : ' + it.titre); if (it.image && /^programmation\//.test(it.image)) await deleteFile(it.image); } catch (e) { data.programmation.splice(i, 0, it); alert(e.message); }
+    start();
+  }));
+}
+
 function directView() {
   const d = data.direct;
   app.innerHTML = `<div class="panel" id="ctl"></div>
@@ -242,6 +304,7 @@ function directView() {
     <label for="hls">Adresse du flux HLS (facultatif, pour un direct sans YouTube)</label><input id="hls" type="text" value="${esc(d.hls)}" placeholder="https://…/manifest/video.m3u8">
     <p class="meta">À remplir si vous utilisez un service comme Cloudflare Stream : collez ici l'adresse de lecture (.m3u8). Elle est utilisée à la place de YouTube.</p>
     <p style="margin-top:14px"><button class="btn" id="save">Enregistrer</button> <span id="st"></span></p></div>
+    ${programmationPanel()}
     <div class="panel"><h2>Commentaires YouTube</h2>
     <p class="meta">Affiche les commentaires sous vos vidéos et le chat pendant le direct. La clé API permet de <b>lire</b> les commentaires. L'identifiant client permet aux personnes connectées avec Google d'<b>écrire</b> un commentaire ou une réponse. Sans ces deux champs, un lien vers YouTube s'affiche à la place.</p>
     <details class="note" style="margin-top:10px"><summary><b>Comment obtenir ces deux valeurs (gratuit)</b></summary><ol class="steps">
@@ -268,7 +331,7 @@ function directView() {
       catch (e) { data.direct.actif = !turningOn; drawCtl(); status($('#ctlmsg'), e.message, false); }
     };
   };
-  drawCtl();
+  drawCtl(); bindProgrammation();
   const chk = () => { const id = ytId($('#yt').value); $('#ytok').textContent = $('#yt').value ? (id ? 'Identifiant reconnu : ' + id : 'Lien non reconnu') : ''; };
   $('#yt').oninput = chk; chk();
   $('#save').onclick = async () => {
@@ -372,6 +435,7 @@ function listHtml(kind) {
     <div class="editor" data-ed="${i}" hidden>
       <label>Titre</label><input type="text" data-f="titre" value="${esc(x.titre)}" maxlength="150">
       <div class="grid2"><div><label>Date</label><input type="date" data-f="date" value="${esc(x.date || '')}"></div>
+      ${kind === 'videos' ? `<div><label>Émission</label><input type="text" data-f="emission" value="${esc(x.emission || '')}" maxlength="80"></div>` : ''}
       ${kind !== 'photos' ? `<div><label>Catégorie</label>${catSelect('', x.categorie || '', true, kind === 'videos')}</div>` : ''}</div>
       <label>Légende</label><textarea data-f="description" maxlength="1000">${esc(x.description || '')}</textarea>
       <p style="margin-top:10px"><button class="btn small" data-save="${i}">Enregistrer les modifications</button></p></div>`).join('');
@@ -385,6 +449,7 @@ function bindList(kind) {
     if (f('date')) it.date = f('date');
     it.description = f('description') || '';
     if (!it.description) delete it.description;
+    const em = f('emission'); if (em !== null) { if (em) it.emission = em; else delete it.emission; }
     const c = f('categorie'); if (c !== null) { if (c) it.categorie = c; else delete it.categorie; }
     b.disabled = true;
     try { await saveData('Modifier : ' + it.titre); } catch (e) { alert(e.message); }
@@ -424,11 +489,14 @@ function videosView() {
     <label for="vt">Titre</label><input id="vt" type="text" maxlength="150">
     <div class="grid2"><div><label for="vy">… ou lien YouTube (si aucun fichier)</label><input id="vy" type="text" placeholder="https://youtu.be/…"></div>
     <div><label for="vd">Date</label><input id="vd" type="date" value="${today()}"></div></div>
+    <label for="vem">Émission (série) <span class="meta">— regroupe les vidéos comme une chaîne ; laissez vide pour utiliser la partie ci-dessous</span></label><input id="vem" type="text" maxlength="80" list="emlist" placeholder="Ex : Mystère du pardon"><datalist id="emlist">${emissionNames().map((n) => `<option value="${esc(n)}">`).join('')}</datalist>
     <label for="vc">Partie du site</label>${catSelect('vc', 'dimanche', false, true)}
     <label for="vx">Légende (facultative, affichée sous la vidéo)</label><textarea id="vx" maxlength="1000" placeholder="Ex : Message du pasteur sur la foi. Texte : Hébreux 11."></textarea>
     <label class="sw" style="margin-top:12px"><input type="checkbox" id="vr"> C'est la rediffusion d'un direct</label>
     <p style="margin-top:14px"><button class="btn" id="add">Ajouter</button> <span id="st"></span></p></div>
+    ${emissionsPanel()}
     <div class="panel"><h2>Vidéos publiées</h2>${listHtml('videos')}</div>`;
+  bindEmissions();
   $('#add').onclick = async () => {
     const f = $('#vf').files[0], id = ytId($('#vy').value);
     const titre = $('#vt').value.trim() || (f ? f.name.replace(/\.[^.]+$/, '') : '');
@@ -436,7 +504,7 @@ function videosView() {
     if (!f && !id) return status($('#st'), 'Choisissez un fichier vidéo ou collez un lien YouTube.', false);
     if (f && f.size > VMAX) return status($('#st'), `Vidéo trop lourde (${Math.round(f.size / 1048576)} Mo, maximum 60 Mo). Mettez-la sur YouTube et collez le lien.`, false);
     $('#add').disabled = true;
-    const entry = { titre, date: $('#vd').value || today(), categorie: $('#vc').value, description: $('#vx').value.trim(), direct: $('#vr').checked || undefined };
+    const entry = { titre, date: $('#vd').value || today(), categorie: $('#vc').value, emission: $('#vem').value.trim(), description: $('#vx').value.trim(), direct: $('#vr').checked || undefined };
     const sent = [];
     try {
       if (f) {
