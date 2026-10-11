@@ -708,6 +708,15 @@ dialog { max-width: min(1240px, 96vw); }
 .up h3 { margin: 4px 0 0; font-size: 1.05rem; color: #fff; }
 .up p { margin: 6px 0 0; color: #aab4c6; font-size: .92rem; white-space: pre-line; }
 @media (max-width: 600px) { .ems { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .up { flex-direction: column; align-items: stretch; } .up > img, .up .noimg { width: 100%; } }
+/* Compteur de visiteurs */
+.visit { margin: 34px 0 10px; padding: 24px; border: 1px solid #232b3a; border-radius: 18px; background: #121722; text-align: center; }
+.visit h2 { font-size: 1.1rem; text-transform: uppercase; letter-spacing: .08em; color: #f5c518; margin: 0 0 18px; }
+.vgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.vtile { padding: 18px 8px; border-radius: 14px; background: #0b0e14; border: 1px solid #232b3a; display: flex; flex-direction: column; gap: 6px; }
+.vtile b { font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+.vtile span { color: #9aa6ba; font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.vnote { margin: 14px 0 0; color: #6f7b90; font-size: .8rem; }
+@media (max-width: 600px) { .vgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .visit { padding: 18px 14px; } }
 </style>
 </head>
 <body>
@@ -1013,6 +1022,41 @@ function initUne() {
   box.addEventListener('touchend', (e) => { if (x0 !== null) { const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) go(i + (dx < 0 ? 1 : -1)); } x0 = null; setTimeout(() => { hold = false; }, 4000); }, { passive: true });
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) uneTimer = setInterval(() => { if (!hold && document.getElementById('une') === box) go(i + 1); }, 5000);
 }
+/* ───────── Compteur de visiteurs (jour, semaine, mois, année) ───────── */
+const VNS = 'eept-tc-tv-haniel323', VAPI = 'https://abacus.jasoncameron.dev';
+function visitKeys() {
+  const d = new Date(), y = d.getFullYear(), p = (n) => String(n).padStart(2, '0');
+  const t = new Date(Date.UTC(y, d.getMonth(), d.getDate())), dn = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - dn);
+  const w = Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
+  return { j: `j-${y}-${p(d.getMonth() + 1)}-${p(d.getDate())}`, s: `s-${t.getUTCFullYear()}-W${p(w)}`, m: `m-${y}-${p(d.getMonth() + 1)}`, a: `a-${y}` };
+}
+async function visitFetch(kind, key) {
+  const r = await fetch(`${VAPI}/${kind}/${VNS}/${key}`); if (r.status === 404) return 0; if (!r.ok) throw new Error('compteur'); return (await r.json()).value || 0;
+}
+async function visitLoad(count) {
+  const keys = visitKeys(); let seen = {}; try { seen = JSON.parse(localStorage.getItem('eept_visites') || '{}'); } catch {}
+  const out = {};
+  await Promise.all(Object.entries(keys).map(async ([k, key]) => {
+    try { const first = count && seen[k] !== key; out[k] = await visitFetch(first ? 'hit' : 'get', key); if (first) seen[k] = key; } catch { out[k] = null; }
+  }));
+  if (count) { try { localStorage.setItem('eept_visites', JSON.stringify(seen)); } catch {} }
+  return out;
+}
+const fmtN = (n) => (n === null || n === undefined ? '—' : n.toLocaleString('fr-FR'));
+function visitorsBlock() {
+  return `<section class="visit" id="visit" aria-label="Visiteurs du site"><h2>Visiteurs du site</h2><div class="vgrid">${[['j', 'Aujourd’hui'], ['s', 'Cette semaine'], ['m', 'Ce mois-ci'], ['a', 'Cette année']].map(([k, t]) => `<div class="vtile"><b data-v="${k}">—</b><span>${t}</span></div>`).join('')}</div><p class="vnote">Chaque visiteur est compté une seule fois par période.</p></section>`;
+}
+async function initVisitors() {
+  const root = document.getElementById('visit'); if (!root) return;
+  const show = (o) => root.querySelectorAll('[data-v]').forEach((e) => {
+    const v = o[e.dataset.v], from = +e.dataset.n || 0; e.dataset.n = v === null ? '' : v;
+    if (v === null || v === undefined) { e.textContent = '—'; return; }
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || v === from) { e.textContent = fmtN(v); return; }
+    const t0 = performance.now(); const step = (t) => { const k = Math.min(1, (t - t0) / 900); e.textContent = fmtN(Math.round(from + (v - from) * (1 - Math.pow(1 - k, 3)))); if (k < 1 && document.body.contains(e)) requestAnimationFrame(step); }; requestAnimationFrame(step);
+  });
+  show(await visitLoad(true));
+  const timer = setInterval(async () => { if (!document.getElementById('visit')) return clearInterval(timer); if (!document.hidden) show(await visitLoad(false)); }, 60000);
+}
 async function home() {
   let [videos, photos, audios] = await Promise.all(['videos', 'photos', 'audios'].map((t) => getJson('/api/media?type=' + t).catch(() => [])));
   document.title = 'EEPT Tokoin Centre';
@@ -1048,9 +1092,10 @@ async function home() {
       ${prog.length ? `<section class="rail-sec"><div class="rail-head"><h2>Programme de la semaine</h2></div>${schedHtml(prog)}</section>` : ''}
       ${hasDon ? '<section class="follow don"><div><h2>Soutenir la web-télé</h2><p>Votre don nous aide à continuer à diffuser les cultes et les messages.</p></div><div class="bt"><a class="btn" href="#/don">Faire un don</a></div></section>' : ''}
       <section class="follow"><div><h2>Restez connectés avec nous</h2><p>Retrouvez nos publications, nos annonces et nos messages sur nos réseaux sociaux.</p></div><div class="bt"><a class="btn" href="#/reseaux">Nos réseaux sociaux</a><a class="btn ghost" href="#/contact">Nous contacter</a></div></section>
+      ${visitorsBlock()}
     </div>`;
   view.querySelectorAll('[data-rail]').forEach((b) => b.addEventListener('click', () => { const r = document.getElementById(b.dataset.rail); r.scrollBy({ left: +b.dataset.dir * r.clientWidth * .85, behavior: 'smooth' }); }));
-  initUne();
+  initUne(); initVisitors();
   bindMedia(allVideos, []); bindShare(ver);
 }
 
