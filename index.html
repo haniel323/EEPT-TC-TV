@@ -575,6 +575,22 @@ dialog { max-width: min(1240px, 96vw); }
 .dg-cap p { margin: 14px 0 0; color: #dbe5ee; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .dg { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
 .rdesc { display: block; margin-top: 4px; color: var(--muted); font-size: .86rem; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
+/* Menu (trois barres) : tout en majuscules */
+.drawer, .dr-panel, .dl, .dr-cta, .dr-foot, .dr-brand { text-transform: uppercase; letter-spacing: .06em; }
+.dl { font-weight: 800; font-size: .95rem; }
+/* Accueil animé : tout arrive, puis « À la une » tourne en boucle */
+.hero-tv h1 { animation: heroIn 1s cubic-bezier(.2,.8,.2,1) .15s both; }
+.hero-tv p { animation: heroIn 1s ease .55s both; }
+.hero-tv .actions { animation: heroUp 1s ease .9s both; }
+.hero-tv .kicker:not(.live) { animation: kickLoop 5s ease-in-out 1.2s infinite both; }
+.hero-tv .kicker.live { animation: kickUp .8s ease .1s both, livePulse 1.6s ease-in-out 1s infinite; }
+.hero-tv .bg.temple { animation: kenburns 18s ease-in-out infinite alternate; }
+.hero-tv .hero-img { overflow: hidden; }
+@keyframes heroUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+@keyframes kickLoop { 0% { opacity: 0; transform: translateY(34px); } 14%, 78% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; transform: translateY(-18px); } }
+@keyframes livePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(224,57,57,.55); } 50% { box-shadow: 0 0 0 10px rgba(224,57,57,0); } }
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .hero-tv .kicker, .hero-tv .bg.temple { animation: none !important; } }
 </style>
 </head>
 <body>
