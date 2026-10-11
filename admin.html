@@ -394,6 +394,7 @@ function annoncesView() {
     <label for="in-t">Titre</label><input id="in-t" type="text" maxlength="150">
     <div class="grid2"><div><label for="in-d">Date</label><input id="in-d" type="date" value="${today()}"></div><div><label class="sw" style="margin-top:34px"><input type="checkbox" id="in-i"> Annonce importante</label></div></div>
     <label for="in-x">Texte</label><textarea id="in-x" maxlength="1500"></textarea>
+    <label for="in-img">Affiche (image, facultative)</label><input id="in-img" type="file" accept="image/*">
     <p style="margin-top:14px"><button class="btn" id="in-add">Publier l'annonce</button> <span id="in-st"></span></p>${list('infos')}</div>
     <div class="panel"><h2>Autres : méditations, prières, pensées</h2>
     <div class="grid2"><div><label for="au-ty">Type</label><select id="au-ty">${TYPES.map((t) => `<option>${t}</option>`).join('')}</select></div><div><label for="au-d">Date</label><input id="au-d" type="date" value="${today()}"></div></div>
@@ -410,8 +411,10 @@ function annoncesView() {
   };
   $('#vs-save').onclick = () => { const t = $('#vs-t').value.trim(); if (!t) return status($('#vs-st'), 'Écrivez le verset.', false); const old = { ...data.verset };
     run($('#vs-save'), $('#vs-st'), 'Verset du jour', () => { data.verset = { texte: t, reference: $('#vs-r').value.trim(), date: today() }; }, () => { data.verset = old; }); };
-  $('#in-add').onclick = () => { const titre = $('#in-t').value.trim(); if (!titre) return status($('#in-st'), 'Donnez un titre.', false);
-    run($('#in-add'), $('#in-st'), 'Nouvelle annonce : ' + titre, () => data.infos.push(clean({ titre, date: $('#in-d').value || today(), texte: $('#in-x').value.trim(), important: $('#in-i').checked || undefined })), () => data.infos.pop()); };
+  $('#in-add').onclick = async () => { const titre = $('#in-t').value.trim(); if (!titre) return status($('#in-st'), 'Donnez un titre.', false);
+    const fi = $('#in-img').files[0]; let image = '';
+    if (fi) { try { $('#in-add').disabled = true; status($('#in-st'), 'Envoi de l’affiche…'); image = `infos/${slug(titre)}-${Date.now().toString(36)}.jpg`; await putFile(image, await fileB64(await resizeImage(fi, 1200)), 'Affiche : ' + titre); } catch (e) { status($('#in-st'), e.message, false); $('#in-add').disabled = false; return; } }
+    run($('#in-add'), $('#in-st'), 'Nouvelle annonce : ' + titre, () => data.infos.push(clean({ titre, date: $('#in-d').value || today(), texte: $('#in-x').value.trim(), important: $('#in-i').checked || undefined, image })), () => data.infos.pop()); };
   $('#au-add').onclick = () => { const titre = $('#au-t').value.trim(), texte = $('#au-x').value.trim(); if (!titre || !texte) return status($('#au-st'), 'Titre et texte requis.', false);
     run($('#au-add'), $('#au-st'), 'Nouvelle publication : ' + titre, () => data.autres.push({ type: $('#au-ty').value, titre, texte, date: $('#au-d').value || today() }), () => data.autres.pop()); };
   $('#pg-save').onclick = () => { const old = data.programme;
@@ -419,7 +422,7 @@ function annoncesView() {
   document.querySelectorAll('[data-rm]').forEach((b) => (b.onclick = async () => {
     const [kind, i] = b.dataset.rm.split(':'), it = data[kind][+i]; if (!confirm(`Supprimer « ${it.titre} » ?`)) return;
     data[kind].splice(+i, 1);
-    try { await saveData('Supprimer : ' + it.titre); } catch (e) { data[kind].splice(+i, 0, it); alert(e.message); }
+    try { await saveData('Supprimer : ' + it.titre); if (it.image && /^infos\//.test(it.image)) await deleteFile(it.image); } catch (e) { data[kind].splice(+i, 0, it); alert(e.message); }
     annoncesView();
   }));
 }
@@ -437,6 +440,7 @@ function listHtml(kind) {
       <div class="grid2"><div><label>Date</label><input type="date" data-f="date" value="${esc(x.date || '')}"></div>
       ${kind === 'videos' ? `<div><label>Émission</label><input type="text" data-f="emission" value="${esc(x.emission || '')}" maxlength="80"></div>` : ''}
       ${kind !== 'photos' ? `<div><label>Catégorie</label>${catSelect('', x.categorie || '', true, kind === 'videos')}</div>` : ''}</div>
+      ${kind === 'audios' ? `<label>Affiche (image)${x.affiche ? ' — remplacer :' : ''}</label>${x.affiche ? `<img src="${esc(x.affiche)}" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:8px;display:block;margin:4px 0">` : ''}<input type="file" accept="image/*" data-f-img>` : ''}
       <label>Légende</label><textarea data-f="description" maxlength="1000">${esc(x.description || '')}</textarea>
       <p style="margin-top:10px"><button class="btn small" data-save="${i}">Enregistrer les modifications</button></p></div>`).join('');
 }
@@ -452,7 +456,11 @@ function bindList(kind) {
     const em = f('emission'); if (em !== null) { if (em) it.emission = em; else delete it.emission; }
     const c = f('categorie'); if (c !== null) { if (c) it.categorie = c; else delete it.categorie; }
     b.disabled = true;
-    try { await saveData('Modifier : ' + it.titre); } catch (e) { alert(e.message); }
+    try {
+      const fi = ed.querySelector('[data-f-img]') && ed.querySelector('[data-f-img]').files[0];
+      if (fi) { const old = it.affiche; it.affiche = `audios/aff-${Date.now()}-${slug(fi.name)}.jpg`; await putFile(it.affiche, await fileB64(await resizeImage(fi, 1000)), 'Affiche : ' + it.titre); if (old && /^audios\//.test(old)) await deleteFile(old); }
+      await saveData('Modifier : ' + it.titre);
+    } catch (e) { alert(e.message); }
     start();
   }));
   document.querySelectorAll('[data-del]').forEach((b) => (b.onclick = async () => {
@@ -462,6 +470,7 @@ function bindList(kind) {
     try {
       await saveData('Supprimer : ' + it.titre);
       if (it.url && /^(photos|audios|videos)\//.test(it.url)) await deleteFile(it.url);
+      if (it.affiche && /^audios\//.test(it.affiche)) await deleteFile(it.affiche);
       if (it.miniature && /^(videos|photos)\//.test(it.miniature)) await deleteFile(it.miniature);
     } catch (e) { alert(e.message); }
     start();
@@ -602,6 +611,7 @@ function audiosView() {
   app.innerHTML = `<div class="panel"><h2>Ajouter un audio</h2>
     <p class="meta">Fichier MP3 ou M4A jusqu'à 25 Mo (environ 25 minutes en qualité correcte). Pour un fichier plus gros, collez un lien direct vers le fichier.</p>
     <label for="af">Fichier audio</label><input id="af" type="file" accept="audio/*,.mp3,.m4a">
+    <label for="aimg">Affiche (image, facultative) <span class="meta">— s'affiche au-dessus de l'audio</span></label><input id="aimg" type="file" accept="image/*">
     <label for="au">… ou lien direct vers le fichier</label><input id="au" type="url" placeholder="https://…/message.mp3">
     <div class="grid2"><div><label for="at">Titre</label><input id="at" type="text" maxlength="150"></div>
     <div><label for="ad">Date</label><input id="ad" type="date" value="${today()}"></div></div>
@@ -619,7 +629,9 @@ function audiosView() {
     try {
       let url = link;
       if (f) { const ext = (f.name.match(/\.[^.]+$/) || ['.mp3'])[0].toLowerCase(); url = `audios/${Date.now()}-${slug(f.name)}${ext}`; await putFile(url, await fileB64(f), 'Ajouter l’audio ' + f.name); }
-      data.audios.push(clean({ titre, date: $('#ad').value || today(), url, categorie: $('#ac').value, description: $('#ax').value.trim() }));
+      let affiche = ''; const fi = $('#aimg').files[0];
+      if (fi) { affiche = `audios/aff-${Date.now()}-${slug(fi.name)}.jpg`; await putFile(affiche, await fileB64(await resizeImage(fi, 1000)), 'Affiche : ' + titre); }
+      data.audios.push(clean({ titre, date: $('#ad').value || today(), url, categorie: $('#ac').value, description: $('#ax').value.trim(), affiche }));
       await saveData('Ajouter l’audio : ' + titre); start();
     } catch (e) { status($('#st'), e.message, false); $('#add').disabled = false; }
   };
