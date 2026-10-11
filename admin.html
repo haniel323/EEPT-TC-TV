@@ -479,6 +479,7 @@ function bindList(kind) {
 const clean = (o) => { for (const k of Object.keys(o)) if (o[k] === '' || o[k] === undefined) delete o[k]; return o; };
 
 /* Vidéos */
+const AMAX = 99 * 1048576;
 const VMAX = 60 * 1048576;
 function videoThumb(file) {
   return new Promise((res) => {
@@ -609,7 +610,7 @@ function photosView() {
 /* Audios */
 function audiosView() {
   app.innerHTML = `<div class="panel"><h2>Ajouter un audio</h2>
-    <p class="meta">Fichier MP3 ou M4A jusqu'à 25 Mo (environ 25 minutes en qualité correcte). Pour un fichier plus gros, collez un lien direct vers le fichier.</p>
+    <p class="meta">Fichier MP3 ou M4A jusqu'à <b>99 Mo</b> (plus d'une heure et demie en qualité correcte). Pour un fichier plus gros, collez un lien direct vers le fichier.</p>
     <label for="af">Fichier audio</label><input id="af" type="file" accept="audio/*,.mp3,.m4a">
     <label for="aimg">Affiche (image, facultative) <span class="meta">— s'affiche au-dessus de l'audio</span></label><input id="aimg" type="file" accept="image/*">
     <label for="au">… ou lien direct vers le fichier</label><input id="au" type="url" placeholder="https://…/message.mp3">
@@ -617,6 +618,7 @@ function audiosView() {
     <div><label for="ad">Date</label><input id="ad" type="date" value="${today()}"></div></div>
     <label for="ac">Partie du site</label>${catSelect('ac', 'dimanche')}
     <label for="ax">Légende (facultative, affichée sous le titre)</label><textarea id="ax" maxlength="1000" placeholder="Ex : Prédication du dimanche, texte : Jean 3."></textarea>
+    <div class="progress"><i id="bar2"></i></div>
     <p style="margin-top:14px"><button class="btn" id="add">Ajouter</button> <span id="st"></span></p></div>
     <div class="panel"><h2>Audios publiés</h2>${listHtml('audios')}</div>`;
   $('#add').onclick = async () => {
@@ -624,16 +626,20 @@ function audiosView() {
     let titre = $('#at').value.trim() || (f ? f.name.replace(/\.[^.]+$/, '') : '');
     if (!titre) return status($('#st'), 'Donnez un titre.', false);
     if (!f && !link) return status($('#st'), 'Choisissez un fichier ou collez un lien.', false);
-    if (f && f.size > 25 * 1048576) return status($('#st'), 'Fichier trop gros (25 Mo maximum). Utilisez un lien direct.', false);
+    if (f && f.size > AMAX) return status($('#st'), `Fichier trop gros (${Math.round(f.size / 1048576)} Mo, maximum 99 Mo). Utilisez un lien direct.`, false);
     $('#add').disabled = true; status($('#st'), 'Envoi en cours…');
+    let entry = null;
     try {
-      let url = link;
-      if (f) { const ext = (f.name.match(/\.[^.]+$/) || ['.mp3'])[0].toLowerCase(); url = `audios/${Date.now()}-${slug(f.name)}${ext}`; await putFile(url, await fileB64(f), 'Ajouter l’audio ' + f.name); }
+      let url = link; const files = [];
+      if (f) { const ext = (f.name.match(/\.[^.]+$/) || ['.mp3'])[0].toLowerCase(); url = `audios/${Date.now()}-${slug(f.name)}${ext}`; status($('#st'), 'Lecture du fichier…'); files.push({ path: url, b64: await fileB64(f) }); }
       let affiche = ''; const fi = $('#aimg').files[0];
-      if (fi) { affiche = `audios/aff-${Date.now()}-${slug(fi.name)}.jpg`; await putFile(affiche, await fileB64(await resizeImage(fi, 1000)), 'Affiche : ' + titre); }
-      data.audios.push(clean({ titre, date: $('#ad').value || today(), url, categorie: $('#ac').value, description: $('#ax').value.trim(), affiche }));
-      await saveData('Ajouter l’audio : ' + titre); start();
-    } catch (e) { status($('#st'), e.message, false); $('#add').disabled = false; }
+      if (fi) { affiche = `audios/aff-${Date.now()}-${slug(fi.name)}.jpg`; files.push({ path: affiche, b64: await fileB64(await resizeImage(fi, 1000)) }); }
+      entry = clean({ titre, date: $('#ad').value || today(), url, categorie: $('#ac').value, description: $('#ax').value.trim(), affiche });
+      data.audios.push(entry);
+      // un seul envoi groupé (gros fichiers acceptés) : fichiers + liste mise à jour
+      await commitBatch(files, [], 'Ajouter l’audio : ' + titre, (d, t) => { $('#bar2').style.width = Math.round((d / t) * 100) + '%'; status($('#st'), `Envoi en cours… ${Math.round((d / t) * 100)} % (ne fermez pas la page)`); });
+      start();
+    } catch (e) { if (entry) { const k = data.audios.indexOf(entry); if (k >= 0) data.audios.splice(k, 1); } status($('#st'), e.message, false); $('#add').disabled = false; }
   };
   bindList('audios');
 }
