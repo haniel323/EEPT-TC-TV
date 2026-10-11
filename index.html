@@ -539,10 +539,46 @@ button, .btn, .tab, .dl, .chip, .arr, .icon-btn, .burger, .cta { min-height: 44p
   .hero-tv .in { padding-top: 90px; }
   #splash .s-logo { width: 110px; height: 110px; margin-bottom: 12px; }
 }
+
+/* Bannière : même rectangle sur téléphone, tablette et ordinateur ; textes animés */
+.hero-img { position: absolute; inset: 0; }
+.hero-tv .bg { position: absolute; inset: 0; }
+.hero-tv { display: block; height: clamp(440px, 50vw, 680px); min-height: 0; }
+.hero-tv .in { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); padding: 0 0 56px; width: min(1240px, 100% - 32px); }
+@media (min-width: 1600px) { .hero-tv .in { width: min(1480px, 100% - 64px); } }
+.hero-tv h1 { animation: heroIn .85s cubic-bezier(.2,.8,.2,1) both; }
+.hero-tv p { animation: heroIn .85s ease .25s both; }
+.hero-tv .actions { animation: heroIn .85s ease .4s both; }
+.hero-tv .kicker { animation: kickUp .7s ease .6s both; }
+@keyframes heroIn { from { opacity: 0; transform: translateX(-34px); } to { opacity: 1; transform: none; } }
+@keyframes kickUp { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-tv h1, .hero-tv p, .hero-tv .actions, .hero-tv .kicker { animation: none; } }
+@media (max-width: 900px) {
+  .hero-tv { height: auto; display: flex; flex-direction: column; background: #0b0e14; overflow: visible; }
+  .hero-tv::before { display: none; }
+  .hero-img { position: relative; inset: auto; width: 100%; aspect-ratio: 2 / 1; overflow: hidden; }
+  .hero-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, #0b0e14 0%, transparent 38%); }
+  .hero-tv .bg.temple { background-position: center 30%; }
+  .hero-tv .in { position: static; transform: none; width: calc(100% - 32px); margin: 0 auto; padding: 4px 0 6px; }
+  .hero-tv h1 { font-size: clamp(1.7rem, 7vw, 2.6rem); }
+  .hero-tv .in > * { max-width: none; }
+}
+@media (max-width: 600px) { .hero-tv { min-height: 0; } .hero-tv .in { width: calc(100% - 28px); } }
+@media (orientation: landscape) and (max-height: 520px) { .hero-tv { min-height: 0; } .hero-tv .in { padding-top: 0; } }
+
+/* Légende à côté du média */
+dialog { max-width: min(1240px, 96vw); }
+.dg { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(250px, 1fr); gap: 22px; align-items: start; }
+.dg-cap { padding: 4px 2px; }
+.dg-cap h3 { color: #fff; font-size: clamp(1.15rem, 2.2vw, 1.5rem); margin: 0 0 6px; letter-spacing: 0; overflow-wrap: anywhere; }
+.dg-cap .meta { color: #98a2b5; }
+.dg-cap p { margin: 14px 0 0; color: #dbe5ee; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .dg { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
+.rdesc { display: block; margin-top: 4px; color: var(--muted); font-size: .86rem; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><div class="s-in"><div class="s-logo"><img src="logo.png" alt="" width="190" height="190"></div><div class="s-name"><span class="w">EEPT</span> <span class="w">Tokoin</span> <span class="w">Centre</span></div><div class="s-sub">Église Évangélique Presbytérienne du Togo</div></div></div>
+<div id="splash" aria-hidden="true"><div class="s-in"><div class="s-logo"><img src="logo.png" alt="" width="190" height="190"></div><div class="s-name"><span class="w">EEPT</span> <span class="w">Tokoin</span> <span class="w">Centre</span></div><div class="s-sub">@CMM</div></div></div>
 <header class="top" id="top">
   <div class="wrap">
     <button class="burger" id="burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="drawer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -822,25 +858,23 @@ async function home() {
   document.title = 'EEPT Tokoin Centre';
   const allVideos = videos; const { don, verset: ver, infos: inf, programme: prog } = await loadSite(); const hasDon = !!(don.lien || don.details || don.texte);
   const rail = (id, title, items, link) => items.length ? `<section class="rail-sec"><div class="rail-head"><h2>${title}</h2><div class="ctl">${link ? `<a href="${link}">Voir tout</a>` : ''}<button class="arr" type="button" data-rail="${id}" data-dir="-1" aria-label="Précédent">‹</button><button class="arr" type="button" data-rail="${id}" data-dir="1" aria-label="Suivant">›</button></div></div><div class="rail" id="${id}">${items.join('')}</div></section>` : '';
-  const rc = (v) => `<button class="rcard" data-video="${v.id}"><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="play"><i>${ICON_PLAY}</i></span></span><h3>${esc(v.title)}</h3><span class="meta">${fmtDate(v.createdAt)}</span></button>`;
+  const rc = (v) => `<button class="rcard" data-video="${v.id}"><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="play"><i>${ICON_PLAY}</i></span></span><h3>${esc(v.title)}</h3><span class="meta">${fmtDate(v.createdAt)}</span>${v.description ? `<span class="rdesc">${esc(v.description)}</span>` : ''}</button>`;
   const shorts = videos.filter((v) => v.category === 'shorts'); videos = videos.filter((v) => v.category !== 'shorts');
   const feat = videos[0];
   const dim = videos.filter((v) => v.category === 'dimanche'), pri = videos.filter((v) => v.category === 'priere'), oth = videos.filter((v) => !v.category);
-  const top = videos.slice(0, 5).map((v, i) => `<button class="rcard rtop" data-video="${v.id}"><span class="n">${i + 1}</span><span class="im">${v.thumb ? `<img loading="lazy" src="${esc(v.thumb)}" alt="">` : ''}<span class="cap">${esc(v.title)}</span></span></button>`);
   const bg = '<div class="bg temple" style="background-image:url(temple.jpg)"></div>';
   const heroTitle = live.live ? live.title : feat ? feat.title : 'EEPT Tokoin Centre';
-  const heroText = live.live ? (live.description || 'Rejoignez-nous en direct.') : feat ? (feat.description || 'Le dernier message de notre église.') : 'Cultes, prédications et temps de prière de l’EEPT Tokoin Centre, en direct et en replay.';
+  const heroText = live.live ? (live.description || '') : feat ? (feat.description || '') : 'Cultes, prédications et temps de prière de l’EEPT Tokoin Centre, en direct et en replay.';
   view.innerHTML = `
-    <section class="hero-tv">${bg}<div class="wrap in">
+    <section class="hero-tv"><div class="hero-img">${bg}</div><div class="wrap in">
       ${live.live ? '<span class="kicker live">● En direct</span>' : `<span class="kicker">${feat ? 'À la une' : 'Web-télé'}</span>`}
-      <h1>${esc(heroTitle)}</h1><p>${esc(heroText)}</p>
+      <h1>${esc(heroTitle)}</h1>${heroText ? `<p>${esc(heroText)}</p>` : ''}
       <div class="actions">${live.live ? '<a class="btn light" href="#/direct">▶ Regarder le direct</a>' : feat ? `<button class="btn light" type="button" data-video="${feat.id}">▶ Regarder</button>` : '<a class="btn light" href="#/direct">▶ Le direct</a>'}
       <a class="btn glass" href="${live.live ? '#/videos' : '#/direct'}">${live.live ? 'Toutes les vidéos' : 'Le direct'}</a></div>
     </div></section>
     <div class="wrap">
       <div class="livestrip ${live.live ? 'on' : ''}"><span class="pill ${live.live ? '' : 'off'}">${live.live ? '● EN DIRECT' : 'HORS LIGNE'}</span><div class="t"><small>${live.live ? 'Maintenant' : 'Prochain rendez-vous'}</small><b>${esc(live.title || 'Culte en direct')}</b>${live.description ? `<div class="meta">${esc(live.description)}</div>` : ''}</div><a class="btn ${live.live ? 'red' : 'ghost'}" href="#/direct">${live.live ? '▶ Voir le direct' : 'Page du direct'}</a></div>
       ${verseInfos(ver, inf)}
-      ${rail('r-top', 'Top des vidéos', top, '#/videos')}
       ${rail('r-dim', 'Cultes du dimanche', dim.map(rc), '#/videos')}
       ${rail('r-pri', 'Temps de prière', pri.map(rc), '#/videos')}
       ${rail('r-oth', 'Autres vidéos', oth.map(rc), '#/videos')}
@@ -916,15 +950,19 @@ function videoCard(v) {
 function audioCard(a) {
   return `<article class="audio"><div><h3 style="font-family:var(--sans);font-size:1.05rem">${esc(a.title)}</h3><span class="meta">${fmtDate(a.createdAt)}</span>${a.description ? `<p class="meta" style="margin:4px 0 0">${esc(a.description)}</p>` : ''}</div><audio controls preload="none" src="${a.url}"></audio></article>`;
 }
+function dlgLayout(media, title, date, desc, extra) {
+  return `<div class="dg"><div class="dg-media">${media}</div><aside class="dg-cap"><h3>${esc(title)}</h3>${date ? `<span class="meta">${esc(date)}</span>` : ''}${desc ? `<p>${esc(desc)}</p>` : ''}</aside></div>${extra || ''}`;
+}
 function bindMedia(videos, photos) {
   view.querySelectorAll('[data-video]').forEach((b) => b.addEventListener('click', () => {
     const v = videos.find((x) => x.id === b.dataset.video); if (!v) return;
-    openDialog(`${v.youtube ? `<iframe class="big" style="aspect-ratio:16/9;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.youtube)}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : `<video controls autoplay playsinline src="${esc(v.url)}"></video>`}<div class="cap"><strong>${esc(v.title)}</strong>${v.description ? `<div style="color:#dbe5ee;margin-top:4px;white-space:pre-line">${esc(v.description)}</div>` : ''}</div>${v.youtube ? '<div id="dlg-cmt"></div>' : ''}`);
+    const media = v.youtube ? `<iframe class="big" style="aspect-ratio:16/9;border:0" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.youtube)}?autoplay=1&rel=0&modestbranding=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : `<video controls autoplay playsinline src="${esc(v.url)}"></video>`;
+    openDialog(dlgLayout(media, v.title, fmtDate(v.createdAt), v.description, v.youtube ? '<div id="dlg-cmt"></div>' : ''));
     if (v.youtube) mountComments($('#dlg-cmt'), v.youtube);
   }));
   view.querySelectorAll('[data-photo]').forEach((b) => b.addEventListener('click', () => {
     const p = photos[+b.dataset.photo];
-    openDialog(`<img class="big" src="${p.url}" alt="${esc(p.title)}"><div class="cap"><strong>${esc(p.title)}</strong>${p.description ? `<div class="meta">${esc(p.description)}</div>` : ''}</div>`);
+    openDialog(dlgLayout(`<img class="big" src="${esc(p.url)}" alt="${esc(p.title)}">`, p.title, fmtDate(p.createdAt), p.description));
   }));
 }
 function openDialog(html) { $('#dlg-body').innerHTML = html; dlg.showModal(); }
