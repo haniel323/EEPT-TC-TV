@@ -23,6 +23,13 @@
       "date": "2026-10-10",
       "url": "audios/1791661654613-prayer.mp3",
       "categorie": "priere"
+    },
+    {
+      "titre": "MOMENT DE PRIERE",
+      "date": "2026-10-11",
+      "url": "audios/1791750448066-aud-20261011-wa0001.mp3",
+      "categorie": "dimanche",
+      "affiche": "audios/aff-1791750476455-20260523-011656.jpg"
     }
   ],
   "google": {
@@ -63,5 +70,7 @@
   },
   "infos": [],
   "autres": [],
-  "programme": []
+  "programme": [],
+  "programmation": [],
+  "emissions": []
 }
