@@ -591,6 +591,17 @@ dialog { max-width: min(1240px, 96vw); }
 @keyframes livePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(224,57,57,.55); } 50% { box-shadow: 0 0 0 10px rgba(224,57,57,0); } }
 @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
 @media (prefers-reduced-motion: reduce) { .hero-tv .kicker, .hero-tv .bg.temple { animation: none !important; } }
+/* Accueil : texte d'accueil fixe, bloc « À la une » en dessous */
+.hero-tv h1, .hero-tv p, .hero-tv .actions, .hero-tv .kicker { animation: none !important; opacity: 1; transform: none; }
+.hero-tv .bg.temple { animation: none !important; }
+.une { margin: 22px 0 8px; padding: 22px; border: 1px solid #232b3a; border-radius: 16px; background: #121722; }
+.une h2 { font-size: clamp(1.5rem, 4.5vw, 2.6rem); line-height: 1.05; text-transform: uppercase; color: #fff; margin: 0; animation: heroIn .9s cubic-bezier(.2,.8,.2,1) both; }
+.une p { color: #c3cbd9; margin: 12px 0 0; max-width: 70ch; white-space: pre-line; animation: heroIn .9s ease .2s both; }
+.une .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.une .kicker:not(.live) { animation: kickLoop 5s ease-in-out infinite both; }
+.une .kicker.live { animation: livePulse 1.6s ease-in-out infinite; }
+@media (max-width: 600px) { .une { padding: 16px; } .une .actions .btn { flex: 1 1 100%; justify-content: center; } }
+@media (prefers-reduced-motion: reduce) { .une *, .une { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -879,16 +890,20 @@ async function home() {
   const feat = videos[0];
   const dim = videos.filter((v) => v.category === 'dimanche'), pri = videos.filter((v) => v.category === 'priere'), oth = videos.filter((v) => !v.category);
   const bg = '<div class="bg temple" style="background-image:url(temple.jpg)"></div>';
-  const heroTitle = live.live ? live.title : feat ? feat.title : 'EEPT Tokoin Centre';
-  const heroText = live.live ? (live.description || '') : feat ? (feat.description || '') : 'Cultes, prédications et temps de prière de l’EEPT Tokoin Centre, en direct et en replay.';
+  const fTitle = live.live ? live.title : feat ? feat.title : '';
+  const fText = live.live ? (live.description || '') : feat ? (feat.description || '') : '';
+  const featBlock = (live.live || feat) ? `<section class="une"><span class="kicker ${live.live ? 'live' : ''}">${live.live ? '● En direct' : 'À la une'}</span>
+      <h2>${esc(fTitle)}</h2>${fText ? `<p>${esc(fText)}</p>` : ''}
+      <div class="actions">${live.live ? '<a class="btn light" href="#/direct">▶ Regarder le direct</a>' : `<button class="btn light" type="button" data-video="${feat.id}">▶ Regarder</button>`}
+      <a class="btn glass" href="${live.live ? '#/videos' : '#/direct'}">${live.live ? 'Toutes les vidéos' : 'Le direct'}</a></div></section>` : '';
   view.innerHTML = `
     <section class="hero-tv"><div class="hero-img">${bg}</div><div class="wrap in">
-      ${live.live ? '<span class="kicker live">● En direct</span>' : `<span class="kicker">${feat ? 'À la une' : 'Web-télé'}</span>`}
-      <h1>${esc(heroTitle)}</h1>${heroText ? `<p>${esc(heroText)}</p>` : ''}
-      <div class="actions">${live.live ? '<a class="btn light" href="#/direct">▶ Regarder le direct</a>' : feat ? `<button class="btn light" type="button" data-video="${feat.id}">▶ Regarder</button>` : '<a class="btn light" href="#/direct">▶ Le direct</a>'}
-      <a class="btn glass" href="${live.live ? '#/videos' : '#/direct'}">${live.live ? 'Toutes les vidéos' : 'Le direct'}</a></div>
+      <span class="kicker">Web-télé</span>
+      <h1>EEPT Tokoin Centre</h1>
+      <p>Cultes, prédications et temps de prière, en direct et en replay.</p>
     </div></section>
     <div class="wrap">
+      ${featBlock}
       <div class="livestrip ${live.live ? 'on' : ''}"><span class="pill ${live.live ? '' : 'off'}">${live.live ? '● EN DIRECT' : 'HORS LIGNE'}</span><div class="t"><small>${live.live ? 'Maintenant' : 'Prochain rendez-vous'}</small><b>${esc(live.title || 'Culte en direct')}</b>${live.description ? `<div class="meta">${esc(live.description)}</div>` : ''}</div><a class="btn ${live.live ? 'red' : 'ghost'}" href="#/direct">${live.live ? '▶ Voir le direct' : 'Page du direct'}</a></div>
       ${verseInfos(ver, inf)}
       ${rail('r-dim', 'Cultes du dimanche', dim.map(rc), '#/videos')}
