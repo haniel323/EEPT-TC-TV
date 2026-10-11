@@ -1044,7 +1044,7 @@ async function visitLoad(count) {
 }
 const fmtN = (n) => (n === null || n === undefined ? '—' : n.toLocaleString('fr-FR'));
 function visitorsBlock() {
-  return `<section class="visit" id="visit" aria-label="Visiteurs du site"><h2>Visiteurs du site</h2><div class="vgrid">${[['j', 'Aujourd’hui'], ['s', 'Cette semaine'], ['m', 'Ce mois-ci'], ['a', 'Cette année']].map(([k, t]) => `<div class="vtile"><b data-v="${k}">—</b><span>${t}</span></div>`).join('')}</div><p class="vnote">Chaque visiteur est compté une seule fois par période.</p></section>`;
+  return `<section class="visit" id="visit" aria-label="Visiteurs du site"><h2>Visiteurs du site</h2><div class="vgrid">${[['j', 'Aujourd’hui'], ['s', 'Cette semaine'], ['m', 'Ce mois-ci'], ['a', 'Cette année']].map(([k, t]) => `<div class="vtile"><b data-v="${k}">—</b><span>${t}</span></div>`).join('')}</div></section>`;
 }
 async function initVisitors() {
   const root = document.getElementById('visit'); if (!root) return;
