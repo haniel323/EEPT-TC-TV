@@ -602,6 +602,21 @@ dialog { max-width: min(1240px, 96vw); }
 .une .kicker.live { animation: livePulse 1.6s ease-in-out infinite; }
 @media (max-width: 600px) { .une { padding: 16px; } .une .actions .btn { flex: 1 1 100%; justify-content: center; } }
 @media (prefers-reduced-motion: reduce) { .une *, .une { animation: none !important; } }
+/* Carrousel À la une : défile de la droite vers la gauche */
+.une { padding: 0; overflow: hidden; position: relative; margin-bottom: 34px; }
+.une-track { display: flex; transition: transform .7s cubic-bezier(.65,0,.25,1); }
+.slide { flex: 0 0 100%; min-width: 0; display: grid; grid-template-columns: 1fr; gap: 0; align-items: stretch; }
+.slide:has(.s-img) { grid-template-columns: 1fr 1.1fr; }
+.s-txt { padding: 24px 24px 64px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.s-img { order: 2; min-height: 100%; aspect-ratio: 16/9; background: #0a0d13; }
+.s-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.une h2 { animation: none; } .une p { animation: none; }
+.une p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.une-nav { position: absolute; left: 24px; bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.une-nav .arr { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #232b3a; background: #181b23; color: #fff; font-size: 1.2rem; }
+.dots { display: flex; gap: 6px; } .dots button { width: 9px; height: 9px; min-height: 0; min-width: 0; max-height: 9px; border-radius: 99px; border: 0; background: #3a4458; padding: 0; transition: width .3s, background .3s; }
+.dots button.on { width: 26px; min-width: 26px; background: #f5c518; }
+@media (max-width: 760px) { .slide:has(.s-img) { grid-template-columns: 1fr; } .s-img { order: 0; } .s-txt { padding: 16px 16px 60px; } .une-nav { left: 16px; } }
 </style>
 </head>
 <body>
@@ -880,6 +895,24 @@ async function don() {
 })();
 
 /* ───────── Pages ───────── */
+let uneTimer;
+function initUne() {
+  clearInterval(uneTimer);
+  const box = document.getElementById('une'); if (!box) return;
+  const track = box.querySelector('.une-track'), n = track.children.length, dots = [...box.querySelectorAll('.dots button')];
+  let i = 0, hold = false;
+  const go = (k) => { i = (k + n) % n; track.style.transform = `translateX(-${i * 100}%)`; dots.forEach((d, j) => d.classList.toggle('on', j === i)); };
+  go(0);
+  if (n < 2) return;
+  box.querySelectorAll('[data-u]').forEach((b) => b.addEventListener('click', () => go(i + +b.dataset.u)));
+  dots.forEach((d, j) => d.addEventListener('click', () => go(j)));
+  box.addEventListener('mouseenter', () => { hold = true; }); box.addEventListener('mouseleave', () => { hold = false; });
+  box.addEventListener('focusin', () => { hold = true; }); box.addEventListener('focusout', () => { hold = false; });
+  let x0 = null;
+  box.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; hold = true; }, { passive: true });
+  box.addEventListener('touchend', (e) => { if (x0 !== null) { const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) go(i + (dx < 0 ? 1 : -1)); } x0 = null; setTimeout(() => { hold = false; }, 4000); }, { passive: true });
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) uneTimer = setInterval(() => { if (!hold && document.getElementById('une') === box) go(i + 1); }, 5000);
+}
 async function home() {
   let [videos, photos, audios] = await Promise.all(['videos', 'photos', 'audios'].map((t) => getJson('/api/media?type=' + t).catch(() => [])));
   document.title = 'EEPT Tokoin Centre';
@@ -890,12 +923,11 @@ async function home() {
   const feat = videos[0];
   const dim = videos.filter((v) => v.category === 'dimanche'), pri = videos.filter((v) => v.category === 'priere'), oth = videos.filter((v) => !v.category);
   const bg = '<div class="bg temple" style="background-image:url(temple.jpg)"></div>';
-  const fTitle = live.live ? live.title : feat ? feat.title : '';
-  const fText = live.live ? (live.description || '') : feat ? (feat.description || '') : '';
-  const featBlock = (live.live || feat) ? `<section class="une"><span class="kicker ${live.live ? 'live' : ''}">${live.live ? '● En direct' : 'À la une'}</span>
-      <h2>${esc(fTitle)}</h2>${fText ? `<p>${esc(fText)}</p>` : ''}
-      <div class="actions">${live.live ? '<a class="btn light" href="#/direct">▶ Regarder le direct</a>' : `<button class="btn light" type="button" data-video="${feat.id}">▶ Regarder</button>`}
-      <a class="btn glass" href="${live.live ? '#/videos' : '#/direct'}">${live.live ? 'Toutes les vidéos' : 'Le direct'}</a></div></section>` : '';
+  const slides = [];
+  if (live.live) slides.push({ k: '● En direct', live: 1, t: live.title, d: live.description || '', btn: '<a class="btn light" href="#/direct">▶ Regarder le direct</a>' });
+  videos.slice(0, 6).forEach((v) => slides.push({ k: 'À la une', t: v.title, d: v.description || '', img: v.thumb, btn: `<button class="btn light" type="button" data-video="${v.id}">▶ Regarder</button>` }));
+  inf.slice().sort((x, y) => (y.important ? 1 : 0) - (x.important ? 1 : 0) || String(y.date).localeCompare(String(x.date))).slice(0, 3).forEach((n) => slides.push({ k: n.important ? 'Important' : 'Information', t: n.titre, d: n.texte || '', btn: '<a class="btn light" href="#/infos">Lire</a>' }));
+  const featBlock = slides.length ? `<section class="une" id="une" aria-roledescription="carrousel"><div class="une-track">${slides.map((x, i) => `<article class="slide" aria-label="${i + 1} / ${slides.length}">${x.img ? `<div class="s-img"><img src="${esc(x.img)}" alt=""></div>` : ''}<div class="s-txt"><span class="kicker ${x.live ? 'live' : ''}">${x.k}</span><h2>${esc(x.t)}</h2>${x.d ? `<p>${esc(x.d)}</p>` : ''}<div class="actions">${x.btn}</div></div></article>`).join('')}</div>${slides.length > 1 ? `<div class="une-nav"><button type="button" class="arr" data-u="-1" aria-label="Précédent">‹</button><div class="dots">${slides.map((_, i) => `<button type="button" data-d="${i}" aria-label="Élément ${i + 1}"></button>`).join('')}</div><button type="button" class="arr" data-u="1" aria-label="Suivant">›</button></div>` : ''}</section>` : '';
   view.innerHTML = `
     <section class="hero-tv"><div class="hero-img">${bg}</div><div class="wrap in">
       <span class="kicker">Web-télé</span>
@@ -918,6 +950,7 @@ async function home() {
       <section class="follow"><div><h2>Restez connectés avec nous</h2><p>Retrouvez nos publications, nos annonces et nos messages sur nos réseaux sociaux.</p></div><div class="bt"><a class="btn" href="#/reseaux">Nos réseaux sociaux</a><a class="btn ghost" href="#/contact">Nous contacter</a></div></section>
     </div>`;
   view.querySelectorAll('[data-rail]').forEach((b) => b.addEventListener('click', () => { const r = document.getElementById(b.dataset.rail); r.scrollBy({ left: +b.dataset.dir * r.clientWidth * .85, behavior: 'smooth' }); }));
+  initUne();
   bindMedia(allVideos, photos); bindShare(ver);
 }
 
