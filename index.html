@@ -827,7 +827,7 @@ dialog { max-width: min(1240px, 96vw); }
     try { c = await (await realFetch('contenu.json', { cache: 'no-store' })).json(); } catch (e) { console.warn('contenu.json introuvable', e); }
     const when = (x) => Date.parse(x.date) || 0;
     const list = (a) => (Array.isArray(a) ? a : []);
-    const videos = list(c.videos).map((v, i) => ({ id: 'v' + i, type: 'videos', title: v.titre || 'Vidéo', description: v.description || '', createdAt: when(v), source: v.direct ? 'direct' : '', category: v.categorie || '', emission: v.emission || '', youtube: v.youtube || '', url: v.url || '', thumb: v.miniature || (v.youtube ? yt(v.youtube) : null) }));
+    const videos = list(c.videos).filter((v) => !(v.publier && Date.parse(v.publier) > Date.now())).map((v, i) => ({ id: 'v' + i, type: 'videos', title: v.titre || 'Vidéo', description: v.description || '', createdAt: Date.parse(v.publier) || when(v), source: v.direct ? 'direct' : '', category: v.categorie || '', emission: v.emission || '', youtube: v.youtube || '', url: v.url || '', thumb: v.miniature || (v.youtube ? yt(v.youtube) : null) }));
     const photos = list(c.photos).map((p, i) => ({ id: 'p' + i, type: 'photos', title: p.titre || 'Photo', description: p.description || '', createdAt: when(p), url: p.url, thumb: p.miniature || p.url, album: p.album || '', ordre: i }));
     const audios = list(c.audios).map((a, i) => ({ id: 'a' + i, type: 'audios', title: a.titre || 'Audio', description: a.description || '', createdAt: when(a), category: a.categorie || '', url: a.url, poster: a.affiche || '' }));
     window.GCFG = c.google || {}; window.EMISSIONS = list(c.emissions);
