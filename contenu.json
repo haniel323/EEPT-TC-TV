@@ -68,7 +68,13 @@
     "reference": "jean 3 16",
     "date": "2026-10-10"
   },
-  "infos": [],
+  "infos": [
+    {
+      "titre": "GALA DE FOOT",
+      "date": "2026-10-24",
+      "important": true
+    }
+  ],
   "autres": [],
   "programme": [],
   "programmation": [],
