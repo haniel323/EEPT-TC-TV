@@ -389,6 +389,7 @@ function annoncesView() {
   app.innerHTML = `<div class="panel"><h2>Verset du jour</h2>
     <label for="vs-t">Texte du verset</label><textarea id="vs-t" maxlength="600" placeholder="Car Dieu a tant aimé le monde…">${esc(V.texte)}</textarea>
     <label for="vs-r">Référence</label><input id="vs-r" type="text" value="${esc(V.reference)}" placeholder="Jean 3:16">
+    <label for="vs-c">Commentaire biblique (facultatif)</label><textarea id="vs-c" maxlength="700" placeholder="Laissez vide : le site met automatiquement une image et un commentaire pour les versets connus.">${esc(V.commentaire || '')}</textarea>
     <p style="margin-top:14px"><button class="btn" id="vs-save">Publier le verset</button> <span id="vs-st"></span></p></div>
     <div class="panel"><h2>Informations (annonces)</h2>
     <label for="in-t">Titre</label><input id="in-t" type="text" maxlength="150">
@@ -410,7 +411,7 @@ function annoncesView() {
     try { fn(); await saveData(msg); annoncesView(); } catch (e) { if (undo) undo(); status(st, e.message, false); btn.disabled = false; }
   };
   $('#vs-save').onclick = () => { const t = $('#vs-t').value.trim(); if (!t) return status($('#vs-st'), 'Écrivez le verset.', false); const old = { ...data.verset };
-    run($('#vs-save'), $('#vs-st'), 'Verset du jour', () => { data.verset = { texte: t, reference: $('#vs-r').value.trim(), date: today() }; }, () => { data.verset = old; }); };
+    run($('#vs-save'), $('#vs-st'), 'Verset du jour', () => { data.verset = { texte: t, reference: $('#vs-r').value.trim(), commentaire: $('#vs-c').value.trim(), date: today() }; }, () => { data.verset = old; }); };
   $('#in-add').onclick = async () => { const titre = $('#in-t').value.trim(); if (!titre) return status($('#in-st'), 'Donnez un titre.', false);
     const fi = $('#in-img').files[0]; let image = '';
     if (fi) { try { $('#in-add').disabled = true; status($('#in-st'), 'Envoi de l’affiche…'); image = `infos/${slug(titre)}-${Date.now().toString(36)}.jpg`; await putFile(image, await fileB64(await resizeImage(fi, 1200)), 'Affiche : ' + titre); } catch (e) { status($('#in-st'), e.message, false); $('#in-add').disabled = false; return; } }
